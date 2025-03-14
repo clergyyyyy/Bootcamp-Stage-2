@@ -45,7 +45,6 @@ def data_attractions(query, params=None):
                 attractions_dict = {}
                 for row in rows:
                     attract_id = row["id"]
-                    # 如果之前沒有建立過，就先初始化
                     if attract_id not in attractions_dict:
                         attractions_dict[attract_id] = {
                             "id": row["id"],
@@ -60,14 +59,12 @@ def data_attractions(query, params=None):
                             "images": []
                         }
                     
-                    # image_url 可能不存在，所以使用 row.get("image_url")
                     image_url = row.get("image_url")
                     if image_url:
                         attractions_dict[attract_id]["images"].append(image_url)
                         
                 return list(attractions_dict.values())
     except:
-        # 這裡過於籠統，實際開發建議精準捕捉並印出 e
         mysql.connector.Error
         raise HTTPException(status_code=500, detail="伺服器內部錯誤，請稍後再試")
 
