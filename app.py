@@ -204,5 +204,6 @@ async def mrts(request: Request):
             content={"error": True, "message": "查無捷運站資料"},
             status_code=500
         )
-    return JSONResponse({"data": mrt}, status_code=200)
+    mrt_list = [item["mrt"] for item in mrt if item["mrt"]]
 
+    return JSONResponse(content={"data": mrt_list}, status_code=200)
