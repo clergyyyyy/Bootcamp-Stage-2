@@ -53,7 +53,7 @@ def data_attractions(query, params=None):
                             "description": row["description"],
                             "address": row["address"],
                             "transport": row["transport"],
-                            "mrt": [row["mrt"]] if row["mrt"] else [],
+                            "mrt": row["mrt"] if row["mrt"] else [],
                             "lat": float(row["lat"]),
                             "lng": float(row["lng"]),
                             "images": []
@@ -119,10 +119,11 @@ def get_attraction(page: int = 0, keyword: str = None):
     offset = page * limit
 
     query = """
-    SELECT 
-        a.id, a.name, a.category, a.description, a.address, 
-        a.transport, a.mrt, a.lat, a.lng
+    SELECT a.id, a.name, a.category, a.description, a.address, 
+           a.transport, a.mrt, a.lat, a.lng,
+           GROUP_CONCAT(i.image_url SEPARATOR ',') AS images
     FROM attractions a
+    LEFT JOIN images i ON a.id = i.attraction_id
     """
     conditions = []
     params = []
@@ -133,31 +134,28 @@ def get_attraction(page: int = 0, keyword: str = None):
 
     if conditions:
         query += " WHERE " + " AND ".join(conditions)
-    query += " LIMIT %s OFFSET %s"
+    query += " GROUP BY a.id ORDER BY a.id LIMIT %s OFFSET %s"
     params.extend([limit + 1, offset])
 
-    attractions_data = data_attractions(query, params)
+    results = data_attractions(query, params)
 
-    for attraction in attractions_data:
-        image_query = "SELECT image_url FROM images WHERE attraction_id = %s"
-        images = data_images(image_query, (attraction["id"],))
-        attraction["images"] = images or []
-
-	#Nextpage邏輯
-    if len(attractions_data) > limit:
+    if len(results) > limit:
         next_page = page + 1
-        attractions_data = attractions_data[:limit]
+        results = results[:limit]
     else:
         next_page = None
 
-    return attractions_data, next_page
+    return results, next_page
+
 
 
 def get_mrt():
     query = """
-    SELECT
-        a.mrt
+    SELECT a.mrt, COUNT(a.id) AS attraction_count
     FROM attractions a
+    WHERE a.mrt IS NOT NULL
+    GROUP BY a.mrt
+    ORDER BY attraction_count DESC;
     """
     return data_mrts(query)
 
@@ -169,7 +167,7 @@ async def attractions(
 ):
     attractions_data, next_page = get_attraction(page, keyword)
 
-    print(f"[DEBUG] Page: {page}, NextPage: {next_page}, Data Count: {len(attractions_data)}")
+    print(f"[DEBUG] Page: {page}, NextPage: {next_page}, Count: {len(attractions_data)}")
 
     if not attractions_data:
         return JSONResponse(
@@ -197,13 +195,14 @@ async def attraction_id(attractionID: int):
 
 
 @app.get("/api/mrts")
-async def mrts(request: Request):
+async def mrts():
     mrt = get_mrt()
     if not mrt:
         return JSONResponse(
             content={"error": True, "message": "查無捷運站資料"},
             status_code=500
         )
+
     mrt_list = [item["mrt"] for item in mrt if item["mrt"]]
 
     return JSONResponse(content={"data": mrt_list}, status_code=200)
