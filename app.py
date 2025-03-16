@@ -1,9 +1,6 @@
-from fastapi import FastAPI, Path, Query, Form, Request
-from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse, JSONResponse
-from fastapi.staticfiles import StaticFiles
+from fastapi import FastAPI, Path, Query, Request
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi import HTTPException
-from starlette.middleware.sessions import SessionMiddleware
-from starlette.templating import Jinja2Templates
 import mysql.connector
 from dotenv import load_dotenv
 import os
@@ -35,96 +32,23 @@ async def booking(request: Request):
 async def thankyou(request: Request):
     return FileResponse("./static/thankyou.html", media_type="text/html")
 
-def data_attractions(query, params=None):
-    try:
-        with mysql.connector.connect(**DB_CONFIG) as conn:
-            with conn.cursor(dictionary=True) as cursor:
-                cursor.execute(query, params or ())
-                rows = cursor.fetchall()
-                
-                attractions_dict = {}
-                for row in rows:
-                    attract_id = row["id"]
-                    if attract_id not in attractions_dict:
-                        attractions_dict[attract_id] = {
-                            "id": row["id"],
-                            "name": row["name"],
-                            "category": row["category"],
-                            "description": row["description"],
-                            "address": row["address"],
-                            "transport": row["transport"],
-                            "mrt": row["mrt"] if row["mrt"] else [],
-                            "lat": float(row["lat"]),
-                            "lng": float(row["lng"]),
-                            "images": []
-                        }
-                    
-                    image_url = row.get("image_url")
-                    if image_url:
-                        attractions_dict[attract_id]["images"].append(image_url)
-                        
-                return list(attractions_dict.values())
-    except:
-        mysql.connector.Error
-        raise HTTPException(status_code=500, detail="伺服器內部錯誤，請稍後再試")
 
-
-def data_images(query, params=None):
-    try:
-        with mysql.connector.connect(**DB_CONFIG) as conn:
-            with conn.cursor(dictionary=True) as cursor:
-                cursor.execute(query, params or ())
-                rows = cursor.fetchall()
-                image_list = []
-                for row in rows:
-                    if "image_url" in row and row["image_url"]:
-                        image_list.append(row["image_url"])
-                return image_list
-    except:
-        mysql.connector.Error
-        raise HTTPException(status_code=500, detail="伺服器內部錯誤，請稍後再試")
-
-
-def data_mrts(query, params=None):
-    try:
-        with mysql.connector.connect(**DB_CONFIG) as conn:
-            with conn.cursor(dictionary=True) as cursor:
-                cursor.execute(query, params or ())
-                rows = cursor.fetchall()
-                
-                mrt_dict = {}
-                for row in rows:
-                    mrt = row["mrt"]
-                    if mrt not in mrt_dict:
-                        mrt_dict[mrt] = {"mrt": mrt}
-                return list(mrt_dict.values())
-    except:
-        mysql.connector.Error
-        raise HTTPException(status_code=500, detail="伺服器內部錯誤，請稍後再試")
-
-
-def get_attraction_id(attractionID):
-    query = """
-    SELECT 
-        a.id, a.name, a.category, a.description, a.address, 
-        a.transport, a.mrt, a.lat, a.lng, i.image_url 
-    FROM attractions a
-    LEFT JOIN images i ON a.id = i.attraction_id
-    WHERE a.id = %s
+def get_attractions_list(page: int = 0, keyword: str = None):
     """
-    return data_attractions(query, (attractionID,))
-
-def get_attraction(page: int = 0, keyword: str = None):
+    依照 page & keyword 查詢景點清單 (含多張圖片)，並進行分頁處理。
+    """
     limit = 12
     offset = page * limit
 
     query = """
-    SELECT a.id, a.name, a.category, a.description, a.address, 
-           a.transport, a.mrt, a.lat, a.lng,
-           GROUP_CONCAT(i.image_url SEPARATOR ',') AS images
+    SELECT
+        a.id, a.name, a.category, a.description, a.address,
+        a.transport, a.mrt, a.lat, a.lng,
+        COALESCE(GROUP_CONCAT(i.image_url SEPARATOR ','), '') AS images
     FROM attractions a
     LEFT JOIN images i ON a.id = i.attraction_id
     """
+
     conditions = []
     params = []
 
@@ -134,10 +58,32 @@ def get_attraction(page: int = 0, keyword: str = None):
 
     if conditions:
         query += " WHERE " + " AND ".join(conditions)
+
     query += " GROUP BY a.id ORDER BY a.id LIMIT %s OFFSET %s"
     params.extend([limit + 1, offset])
 
-    results = data_attractions(query, params)
+    with mysql.connector.connect(**DB_CONFIG) as conn:
+        with conn.cursor(dictionary=True) as cursor:
+            cursor.execute(query, params or ())
+            rows = cursor.fetchall()
+
+    results = []
+    for row in rows:
+        images_list = row["images"].split(",") if row["images"] else []
+        mrt_value = row["mrt"] if row["mrt"] else ""
+
+        results.append({
+            "id": row["id"],
+            "name": row["name"],
+            "category": row["category"],
+            "description": row["description"],
+            "address": row["address"],
+            "transport": row["transport"],
+            "mrt": mrt_value,
+            "lat": float(row["lat"]),
+            "lng": float(row["lng"]),
+            "images": images_list
+        })
 
     if len(results) > limit:
         next_page = page + 1
@@ -148,26 +94,69 @@ def get_attraction(page: int = 0, keyword: str = None):
     return results, next_page
 
 
+def get_single_attraction(attraction_id: int):
+    query = """
+    SELECT
+        a.id, a.name, a.category, a.description, a.address,
+        a.transport, a.mrt, a.lat, a.lng,
+        COALESCE(GROUP_CONCAT(i.image_url SEPARATOR ','), '') AS images
+    FROM attractions a
+    LEFT JOIN images i ON a.id = i.attraction_id
+    WHERE a.id = %s
+    GROUP BY a.id
+    """
 
-def get_mrt():
+    with mysql.connector.connect(**DB_CONFIG) as conn:
+        with conn.cursor(dictionary=True) as cursor:
+            cursor.execute(query, (attraction_id,))
+            row = cursor.fetchone()
+
+    if not row:
+        return None
+
+    images_list = row["images"].split(",") if row["images"] else []
+    mrt_value = row["mrt"] if row["mrt"] else ""
+
+    return {
+        "id": row["id"],
+        "name": row["name"],
+        "category": row["category"],
+        "description": row["description"],
+        "address": row["address"],
+        "transport": row["transport"],
+        "mrt": mrt_value,
+        "lat": float(row["lat"]),
+        "lng": float(row["lng"]),
+        "images": images_list
+    }
+
+
+def get_mrt_list():
     query = """
     SELECT a.mrt, COUNT(a.id) AS attraction_count
     FROM attractions a
     WHERE a.mrt IS NOT NULL
     GROUP BY a.mrt
-    ORDER BY attraction_count DESC;
+    ORDER BY attraction_count DESC
     """
-    return data_mrts(query)
+
+    with mysql.connector.connect(**DB_CONFIG) as conn:
+        with conn.cursor(dictionary=True) as cursor:
+            cursor.execute(query)
+            rows = cursor.fetchall()
+
+    mrt_list = [row["mrt"] for row in rows if row["mrt"]]
+    return mrt_list
+
 
 @app.get("/api/attractions")
-async def attractions(
+async def attractions_api(
     request: Request,
     page: int = Query(0, ge=0),
     keyword: str = Query(None)
 ):
-    attractions_data, next_page = get_attraction(page, keyword)
-
-    print(f"[DEBUG] Page: {page}, NextPage: {next_page}, Count: {len(attractions_data)}")
+    attractions_data, next_page = get_attractions_list(page, keyword)
+    print(f"[DEBUG] page={page}, keyword={keyword}, next_page={next_page}, count={len(attractions_data)}")
 
     if not attractions_data:
         return JSONResponse(
@@ -181,28 +170,26 @@ async def attractions(
     }, status_code=200)
 
 
-@app.get("/api/attractions/{attractionID}")
-async def attraction_id(attractionID: int):
-    attraction = get_attraction_id(attractionID)
-    
-    if not attraction:
+@app.get("/api/attraction/{attractionId}")
+async def attraction_id_api(attractionId: int):
+    attraction_data = get_single_attraction(attractionId)
+
+    if not attraction_data:
         return JSONResponse(
-            content={"error": True, "message": f"ID={attractionID}編號不正確"},
-            status_code=500
+            content={"error": True, "message": f"ID={attractionId}編號不正確"},
+            status_code=400
         )
 
-    return JSONResponse({"data": attraction[0]}, status_code=200)
+    return JSONResponse({"data": attraction_data}, status_code=200)
 
 
 @app.get("/api/mrts")
-async def mrts():
-    mrt = get_mrt()
-    if not mrt:
+async def mrts_api():
+    mrt_data = get_mrt_list()
+    if not mrt_data:
         return JSONResponse(
             content={"error": True, "message": "查無捷運站資料"},
             status_code=500
         )
 
-    mrt_list = [item["mrt"] for item in mrt if item["mrt"]]
-
-    return JSONResponse(content={"data": mrt_list}, status_code=200)
+    return JSONResponse(content={"data": mrt_data}, status_code=200)
