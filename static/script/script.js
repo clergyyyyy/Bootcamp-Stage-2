@@ -1,15 +1,9 @@
-/**
- * 1. 首次 DOMContentLoaded: 載入 MRT (loadMRTs) & 設定 listbarScroll
- */
 document.addEventListener("DOMContentLoaded", () => {
     loadMRTs();
     setupListbarScroll();
-    setupSearchEvents();  // <-- 新增：初始化搜尋事件監聽
+    setupSearchEvents();  
 });
 
-/**
- * 載入 MRT 清單
- */
 async function loadMRTs() {
     try {
         const response = await fetch("/api/mrts", {
@@ -29,7 +23,7 @@ async function loadMRTs() {
         const listbar = document.querySelector(".listbar .container");
         if (!listbar) return;
 
-        // 動態插入 MRT 清單
+        
         data.data.forEach(mrt => {
             const p = document.createElement("p");
             p.textContent = mrt;
@@ -42,9 +36,6 @@ async function loadMRTs() {
     }
 }
 
-/**
- * 設定左右滾動按鈕
- */
 function setupListbarScroll() {
     const listbarContainer = document.querySelector(".listbar .container");
     const leftButton = document.querySelector(".listbar .left img");
@@ -63,20 +54,14 @@ function setupListbarScroll() {
     });
 }
 
-/**
- * 2. 第二個 DOMContentLoaded：初次載入景點資料
- */
 document.addEventListener("DOMContentLoaded", () => {
-    fetchAttractions(); // 初次載入第 1 頁
+    fetchAttractions(); 
 });
 
-/** 
- * 分頁參數
- */
 let nextPage = 0;     
 let isLoading = false; 
 
-// sentinel observer
+
 const sentinelObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
@@ -85,15 +70,12 @@ const sentinelObserver = new IntersectionObserver((entries) => {
     });
 }, { rootMargin: "300px" });
 
-// sentinel
+
 const sentinel = document.querySelector(".sentinel");
 if (sentinel) {
     sentinelObserver.observe(sentinel);
 }
 
-/**
- * 從 /api/attractions 載入資料: 預設用分頁（page = nextPage）做查詢
- */
 async function fetchAttractions() {
     if (isLoading) return;
     isLoading = true;
@@ -106,7 +88,7 @@ async function fetchAttractions() {
 
         const data = await response.json();
 
-        // 若無更多資料 => 停止監聽
+        
         if (!data.data || data.data.length === 0) {
             sentinelObserver.unobserve(sentinel);
             return;
@@ -122,9 +104,6 @@ async function fetchAttractions() {
     }
 }
 
-/**
- * loadCard: 插入卡片
- */
 function loadCard(attractions) {
     const bigBox = document.querySelector(".big-box");
     if (!bigBox) return;
@@ -159,22 +138,12 @@ function loadCard(attractions) {
         cardFrame.appendChild(card);
         cardFrame.appendChild(cardCategory);
 
-        // 插在 sentinel 前面，確保 sentinel 永遠在最底
+        
         const sentinel = document.querySelector(".sentinel");
         bigBox.insertBefore(cardFrame, sentinel);
     });
 }
 
-/* ------------------------------------------------------------------
-   新增：搜尋功能
------------------------------------------------------------------- */
-
-/**
- * 設定搜尋事件監聽：
- * 1. 點擊「搜尋」按鈕
- * 2. 輸入框按下 Enter
- * 3. 點擊 .mrt-item (listbar) 時將內容寫入輸入框
- */
 function setupSearchEvents() {
     const searchBtn = document.querySelector("button.搜尋");
     const searchInput = document.querySelector("input.景點名稱");
@@ -183,51 +152,51 @@ function setupSearchEvents() {
 
     if (!searchBtn || !searchInput || !listbarContainer || !bigBox) return;
 
-    // 點擊「搜尋」按鈕
+    
     searchBtn.addEventListener("click", handleSearch);
-    // 輸入框按下 Enter
+    
     searchInput.addEventListener("keypress", (e) => {
         if (e.key === "Enter") {
             handleSearch();
         }
     });
 
-    // 點擊 MRT list p
+    
     listbarContainer.addEventListener("click", (e) => {
         if (e.target.matches(".mrt-item")) {
             searchInput.value = e.target.textContent; 
-            handleSearch(); // ← 點完馬上搜尋
+            handleSearch(); 
         }
     });
 
-    // 搜尋函式
+    
     function handleSearch() {
         const keyword = searchInput.value.trim();
-        showLoading(); // 1️⃣ 先顯示 Loading 效果
+        showLoading(); 
     
-        clearBigBox(); // 2️⃣ 清空 Big Box
+        clearBigBox(); 
     
         if (!keyword) {
-            // 🔥 若搜尋框為空，重設分頁並重新載入所有景點
+            
             resetAndFetch();
         } else {
             fetchByKeyword(keyword);
         }
     }
     function clearBigBox() {
-        sentinelObserver.unobserve(sentinel);      // 先停止觀察
+        sentinelObserver.unobserve(sentinel);      
         document.querySelectorAll(".big-box .card-frame").forEach(el => {
             if (!el.classList.contains("sentinel")) { 
-                el.remove(); // 刪除所有卡片，**但保留 sentinel**
+                el.remove(); 
             }
         });
     }
 
-    // 根據 keyword 來搜尋
+    
     async function fetchByKeyword(keyword) {
         try {
-            showLoading(); // 1️⃣ 先顯示 Loading Card
-            clearBigBox(); // 2️⃣ 清空原有 Big Box
+            showLoading(); 
+            clearBigBox(); 
     
             const url = `/api/attractions?keyword=${encodeURIComponent(keyword)}`;
             const response = await fetch(url);
@@ -236,7 +205,7 @@ function setupSearchEvents() {
             }
     
             const data = await response.json();
-            hideLoading(); // 3️⃣ 移除 Loading Card
+            hideLoading(); 
     
             if (!data.data || data.data.length === 0) {
                 console.log("查無資料");
@@ -246,7 +215,7 @@ function setupSearchEvents() {
             loadCard(data.data);
         } catch (err) {
             console.error(err);
-            hideLoading(); // 如果 API 出錯，也要確保 Loading 消失
+            hideLoading(); 
         }
     }
     
@@ -255,29 +224,29 @@ function setupSearchEvents() {
 function showLoading() {
     const bigBox = document.querySelector(".big-box");
 
-    // 先清除舊的 Loading（避免重複累積）
+    
     hideLoading();
 
     for (let i = 0; i < 8; i++) {
         const cardFrame = document.createElement("div");
-        cardFrame.classList.add("card-frame", "loading-card"); // 加上 loading 樣式
+        cardFrame.classList.add("card-frame", "loading-card"); 
 
         const card = document.createElement("div");
         card.classList.add("card");
 
         const img = document.createElement("div");
-        img.classList.add("loading-img"); // 這裡使用 div 模擬圖片位置
+        img.classList.add("loading-img"); 
 
         const title = document.createElement("div");
-        title.classList.add("loading-title"); // 這裡使用 div 模擬標題
+        title.classList.add("loading-title"); 
 
         const cardCategory = document.createElement("div");
         cardCategory.classList.add("card_category");
 
         const mrt = document.createElement("div");
-        mrt.classList.add("loading-text"); // 模擬捷運站名稱
+        mrt.classList.add("loading-text"); 
         const category = document.createElement("div");
-        category.classList.add("loading-text"); // 模擬類別
+        category.classList.add("loading-text"); 
 
         card.appendChild(img);
         card.appendChild(title);
