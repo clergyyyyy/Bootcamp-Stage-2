@@ -3,9 +3,11 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi import HTTPException
 import mysql.connector
 from dotenv import load_dotenv
+from fastapi.staticfiles import StaticFiles
 import os
 
 app = FastAPI()
+app.mount("/static", StaticFiles(directory="static"), name="static")
 load_dotenv()
 
 DB_CONFIG = {
