@@ -1,0 +1,415 @@
+html, body {
+    font-size: 20px;
+    margin: 0;
+    padding: 0px;
+    box-sizing: border-box;
+    max-width: 1920px; /* 設定最大寬度 */
+    overflow-x: hidden; /* 隱藏橫向捲軸 */
+}
+
+h1 {
+    margin: 0;
+    font-size: 30px;
+    color: #448899;
+}
+
+h1 a {
+    text-decoration: none;
+    color: inherit;
+}
+
+
+.nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.navigation {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%; /* 讓 navigation 撐滿整個螢幕 */
+    height: 54px;
+    background-color: #fff;
+    position: fixed; /* 固定在頁面頂部 */
+    top: 0; /* 確保與視窗頂部對齊 */
+    left: 0;
+    z-index: 1000; /* 確保導航列高於其他內容 */
+}
+
+.container1 {
+    width: 1180px;
+    display: flex;
+    justify-content: space-between;
+    display: flex;
+    position: relative;
+    gap: 15px;
+    align-items: center;
+    margin: 0 auto; /* 讓其水平置中 */
+    padding: 10px 10px;
+    z-index: 1001; /* 確保比 navigation 更高 */
+}
+
+.container1 h1 {
+    margin: 15px;
+}
+
+.menu{
+    display: flex;
+}
+
+.item {
+    text-decoration: none; /* 移除連結的預設底線 */
+    color: #666;
+    font-size: 16px;
+    padding: 0 10px 0 10px;
+}
+
+.body {
+    margin: 0;
+    font-family: 'Noto Sans', Arial, sans-serif;
+    background-color: #fff;
+    color: #000;
+    line-height: 1.2;
+}
+
+.header {
+    font: 'Arial';
+    flex-direction: center;
+    text-align: center;
+    margin: 0;
+}
+
+
+
+h2 {
+    margin: 0;
+    font-size: 20px;
+    color: #000;
+}
+
+.container1 h1 {
+    padding: 0;
+    margin: 0;
+    font-size: 20px;
+}
+
+.banner {
+    position: relative; 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%; /* 撐滿視窗寬度 */
+    max-width: 1920px; /* 限制最大寬度 */
+    padding-top: 10px; /* 預留給 fixed 的 nav */
+    height: 374px; /* = 320 + 54 */
+    overflow: hidden;
+}
+
+/* 確保圖片鋪滿整個 banner，但不擋住搜尋框 */
+.banner img {
+    width: 100%; /* 讓圖片寬度隨視窗縮放 */
+    max-width: 1920px; /* 限制最大寬度 */
+    height: 320px; /* 固定高度 */
+    object-fit: cover; /* 確保圖片等比例填滿 */
+    display: block; /* 移除圖片底部空白 */
+    position: absolute; /* 讓圖片在最底層 */
+    z-index: 0; /* 確保圖片在最底層 */
+}
+
+/* 文字區塊，確保在圖片上層 */
+.banner .slogan {
+    padding: 10px;
+    display: flex;
+    justify-content: flex-start;
+    flex-direction: column;
+    position: absolute;
+    gap: 15px;
+    z-index: 2; /* 確保 slogan 高於圖片 */
+    display: flex;
+    max-width: 1200px;
+    margin: 0 auto;
+    box-sizing: border-box;
+    width: 100%; /* 確保可以隨視窗縮小 */
+}
+
+.banner h1 {
+    padding: 10px 0;
+    margin: 0;
+    gap: 15px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    font-size: 28px;
+    color: #fff;
+    z-index: 3; /* 確保標題高於圖片 */
+}
+
+.banner p {
+    color: #fff;
+}
+
+/* 搜尋框區塊，確保在圖片上層 */
+.search {
+    display: flex;
+    justify-content: flex-start;
+    max-width: 460px;
+    box-shadow: 0 0 20px #AABBCC;
+    position: relative;
+    z-index: 3; /* 確保搜尋框高於圖片 */
+}
+
+.search input {
+    flex-grow: 1;
+    border: none;
+    outline: none;
+    background-color: #fff;
+    color: #757575;
+    padding: 10px 15px;
+    border-radius: 5px 0 0 5px;
+    height: 46px;
+}
+
+.search button {
+    background-color: #448899;
+    height: 46px;
+    width: 60px;
+    outline: none;
+    border: none;
+    border-radius: 0 5px 5px 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    cursor: pointer;
+}
+
+.search button img {
+    width: 100%; /* 圖片應該填滿 button */
+    height: auto;
+    max-width: 30px;
+    max-height: 30px;
+}
+
+
+
+.content {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    max-width: 100%;
+}
+
+/* 父容器 .listbar */
+.listbar {
+    display: flex;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+    height: 70px;
+    box-sizing: border-box;
+    width: 100%; /* 確保可以隨視窗縮小 */
+}
+
+/* 左右按鈕容器 - 固定 50px */
+.btn_container {
+    width: 50px;
+    flex: 0 0 50px; /* 固定 50px，不會縮小 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* MRT 項目列表區域 */
+.listbar .container {
+    flex: 1; /* 讓中間區域填滿剩餘空間 */
+    min-width: 260px; /* 避免過小 */
+    max-width: calc(100% - 100px); /* 減去左右各 50px */
+    height: 70px;
+    display: flex;
+    justify-content: flex-start;
+    overflow: hidden;
+    scroll-behavior: smooth;
+    box-sizing: border-box;
+}
+
+.listbar .container::-webkit-scrollbar {
+    display: none;
+}
+
+/* MRT 項目 */
+.mrt-item {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 15px;
+    cursor: pointer;
+    text-align: center;
+    white-space: nowrap;
+    min-width: fit-content;
+}
+
+/* 確保 p 元素內的文字不會換行 */
+.listbar p {
+    display: inline-flex;
+    margin: 0;
+    padding: 0;
+    justify-content: center;
+    align-items: center;
+    color: #666;
+    font-size: 16px;
+    padding: 0 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+.container2 {
+
+    display: flex;
+    max-width: 1200px;
+    box-sizing: border-box;
+    flex-direction: column; /* 讓內容垂直排列 */
+    align-items: flex-start; /* 讓內容靠左對齊 */
+    justify-content: flex-start; /* 從上方開始排列 */
+    width: 100%;
+    margin: 0 auto; /* 讓整個 `.container2` 水平置中 */
+    min-height: 80vh; /* 避免 footer 跑上來 */
+    padding: 10px;
+    display: flex;
+    position: relative;
+    gap: 15px;
+}
+
+.main-content {
+    margin: 0 auto;
+}
+
+
+
+.big-box {
+    max-width: 1170px; /* 讓其最大為 1170px */
+    width: 100%; /* 讓其可縮小 */
+    margin: 0 auto; /* 置中 */
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 30px;
+}
+
+
+.card-frame {
+    border: solid #E8E8E8;
+    border-radius: 5px;
+    width: calc((100% - 90px) / 4); /* 讓卡片在一行排列 4 個 */
+    box-sizing: border-box; /* 確保 padding, border 不影響 width */
+}
+
+
+.card {
+    display: flex;
+    flex-wrap: wrap;
+    position: relative;
+    overflow: hidden;
+    width: 100%; /* 讓 card 撐滿 card-frame */
+    height: 197px;
+    margin: 0px; 
+    align-items: center;
+    background-color: #000000;
+    text-align: center;
+    border-radius: 5px 5px 0 0;
+    box-sizing: border-box;
+}
+
+.card h2 {
+    position: absolute; /* 標題絕對定位在 container 內 */
+    bottom: 0; /* 將標題固定在 container 底部 */
+    width: 100%;
+    object-fit: cover;
+    margin: 0;
+    padding: 10px;
+    background-color: rgba(0, 0, 0, 0.6); /* 半透明背景讓文字更清晰 */
+    color: #fff; /* 文字顏色 */
+    font-size: 16px; /* 根據需求調整字體大小 */
+    text-align: left; /* 文字水平置中 */
+    z-index: 2; /* 標題層級高於圖片 */
+    white-space: nowrap; /* 禁止文字換行 */
+    overflow: hidden; /* 超出部分隱藏 */
+    text-overflow: ellipsis; /* 顯示省略號 */
+    width: calc(100% - 8px); /* 減去 padding 寬度，確保不溢出 */
+}
+
+.card img {
+    width: 100%; /* 圖片寬度撐滿父容器 */
+    height: 100%; /* 高度撐滿父容器 */
+    object-fit: cover; /* 確保圖片裁剪後填滿父容器，保持比例 */
+    display: block; /* 避免圖片底部的多餘空白 */
+    max-height: 100%; /* 避免圖片高度超過父容器 */
+    margin: 0; /* 移除圖片外部空隙 */
+    padding: 0; /* 移除內部填充 */
+    box-sizing: border-box; /* 包含邊框和內距在寬高計算內 */
+    max-height: inherit; /* 保持繼承父容器的高度 */
+}
+
+.card_category {
+    margin: 0px;
+    position: relative;
+    padding: 10px;
+    display: flex;
+    flex-direction: space-between;
+    height: 25px;
+    background-color: #fff;
+    stroke: #000;
+    justify-content: space-between;
+    border-radius: 0 0 5px 5px;
+}
+
+.card_category p {
+    padding: 0px;
+    margin: 0px;
+    display: flex;
+    align-items: center;
+    font-size: 16px;
+    color: #757575;
+    height: 20px;
+}
+
+footer {
+    position: relative; 
+    display: flex; /* 啟用 flexbox */
+    justify-content: center; /* 水平居中 */
+    align-items: center; /* 垂直居中 */
+    height: 104px; /* 確保有固定高度 */
+    overflow: hidden; /* 超出部分隱藏 */
+    background-color: #757575;
+}
+
+footer p {
+    margin: 0;
+    color: #fff;
+}
+
+@media screen and (min-width: 360px) and (max-width: 600px) {
+    .big-box {
+        max-width: 100%;
+    }
+
+    .card-frame {
+        width: 100%; /* 讓卡片單行滿版 */
+        box-sizing: border-box;
+    }
+}
+
+@media screen and (min-width: 601px) and (max-width: 1200px) {
+    .big-box {
+        max-width: 100%; /* 讓其隨視窗縮小 */
+    }
+
+    .card-frame {
+        width: calc((100% - 30px) / 2); /* 讓每行顯示 2 張 */
+        box-sizing: border-box;
+    }
+}
