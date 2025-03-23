@@ -1,11 +1,71 @@
-<!DOCTYPE html>
-<html lang="en">
+<html lang="zh">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Index</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./static/styles/style.css">
+    <title>台北一日遊</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&display=swap');
+    </style>
 </head>
 <body>
-  
+    <div class="header">
+        <div class="navigation">
+            <div class="container1">
+                <h1><a href="./">台北一日遊</a></h1>
+                <div class="menu-container">
+                    <div class="nav">
+                        <div class="menu">
+                            <a href="/item1" class="item">預定行程</a>
+                            <a href="/item2" class="item">登入/註冊</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="banner">
+        <div class="slogan">
+            <h1>輕鬆享受台北一日悠閒</h1>
+            <p>體驗城市的深度旅遊行程</p>
+            <div class="search">
+                <input class="景點名稱" placeholder="輸入景點名稱查詢">
+                <button class="搜尋">
+                    <img src="./static/img/icon/icon_search.svg" alt="Welcome">
+                </button>
+            </div>
+        </div>
+        <img src="./static/img/welcome.png" alt="Welcome">
+    </div>
+    
+    <div class="content">
+        <div class="listbar">
+            <div class="btn_container">
+                <div class="left">
+                    <img src="./static/img/icon/arrow left.svg" alt="arrow_left">
+                </div>
+            </div>
+            <div class="container"></div>
+            <div class="btn_container">
+                <div class="right">
+                    <img src="./static/img/icon/arrow right.svg" alt="arrow_right">
+                </div>
+            </div>
+        </div>
+        
+        <div class="container2">
+            <div class="big-box">
+                <div class="sentinel"></div>
+            </div>
+  <!-- **改為空容器，JavaScript 會動態載入景點** -->
+        </div>
+    </div>
+    
+    <footer>
+        <p>COPYRIGHT © 2021 台北一日遊</p>
+    </footer>
+
 </body>
+<script src="./static/script/script.js" defer></script>
 </html>
