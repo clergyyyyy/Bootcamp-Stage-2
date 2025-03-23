@@ -135,7 +135,7 @@ h2 {
 }
 
 .banner h1 {
-    padding: 10px 0;
+    padding: 0;
     margin: 0;
     gap: 15px;
     display: flex;
@@ -148,10 +148,12 @@ h2 {
 
 .banner p {
     color: #fff;
+    margin: 0px;
 }
 
 
 .search {
+    padding-top: 10px;
     display: flex;
     justify-content: flex-start;
     max-width: 460px;
