@@ -18,6 +18,25 @@ h1 a {
     color: inherit;
 }
 
+h2 {
+    color:#666666;
+    font-size: 24px;
+}
+
+h3 {
+    color:#666666;
+    font-size: 16px;
+}
+
+p {
+    color: #666666;
+    font-size: 16px;
+}
+
+input[type="date"],
+input[type="radio"] {
+  cursor: pointer;
+}
 
 .nav {
     display: flex;
@@ -297,25 +316,26 @@ h2 {
 
 
 .big-box {
-    max-width: 1180px; 
-    width: 100%; 
-    margin: 0 auto; 
+    max-width: 1180px;
+    width: 100%;
+    margin: 0 auto;
     display: flex;
     flex-wrap: wrap;
     justify-content: flex-start;
     gap: 30px;
-    margin: 0px;
-}
-
-
-.card-frame {
-    border: solid #E8E8E8 2px;
-    border-radius: 5px;
+  }
+  
+  /* <a> 直接扮演 card-frame 的角色 */
+  .card-frame {
+    display: block;           /* 讓它是區塊 */
     width: calc((100% - 90px) / 4); 
-    box-sizing: border-box; 
-    margin: 0px;
-}
-
+    border: 2px solid #E8E8E8;
+    border-radius: 5px;
+    text-decoration: none;    /* 移除連結下劃線 */
+    color: inherit;           /* 繼承外層文字顏色 */
+    cursor: pointer;
+    box-sizing: border-box;
+  }
 
 .card {
     display: flex;
@@ -355,12 +375,13 @@ h2 {
     width: 100%; 
     height: 100%; 
     object-fit: cover; 
+    box-sizing: border-box; 
+    max-height: inherit; 
     display: block; 
     max-height: 100%; 
     margin: 0; 
     padding: 0; 
-    box-sizing: border-box; 
-    max-height: inherit; 
+
 }
 
 .card_category {
@@ -368,10 +389,9 @@ h2 {
     position: relative;
     padding: 10px;
     display: flex;
-    flex-direction: space-between;
+    flex-direction: row;  /* ✅ 正確值 */
     height: 25px;
     background-color: #fff;
-    stroke: #000;
     justify-content: space-between;
     border-radius: 0 0 5px 5px;
 }
@@ -402,6 +422,191 @@ footer p {
     color: #fff;
 }
 
+/*以下為attraction獨有的css*/
+
+.attraction_container_1 {
+
+    display: flex;
+    max-width: 1200px;
+    box-sizing: border-box;
+    flex-direction: row; 
+    justify-content: space-between; 
+    width: 100%;
+    margin-top: 60px;
+    padding: 15px;
+    display: flex;
+    position: relative;
+}
+
+.attraction_container_1 h2 {
+    max-width: 540px;
+    color: #666;
+}
+.attraction_carousel {
+    position: relative;
+    width: 100%;    /* 或固定 540px 皆可 */
+    max-width: 540px;
+    height: 400px;
+    overflow: hidden; 
+    border-radius: 5px;
+  }
+  
+  .slider {
+    display: flex;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE 10+ */
+  }
+  
+  .slider::-webkit-scrollbar {
+    display: none; /* Chrome, Safari */
+  }
+
+  .carousel-dots-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    bottom: 10px;
+    width: 100%;
+    z-index: 10;
+  }
+  
+  .carousel-dots {
+    display: flex;
+    gap: 6px;
+    position: relative;     /* 或你需要的定位方式 */
+    z-index: 20;
+    padding: 0;
+  }
+
+  .carousel-dots img {
+    width: 12px;
+    height: 12px;
+    cursor: pointer;
+    display: block;
+  }
+
+  .slider img {
+    flex: 0 0 100%; /* 每張圖片佔滿整個 slider 區塊 */
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    box-sizing: border-box;
+    display: block;
+    border-radius: 5px;
+  }
+
+.attraction_carousel .all_btn_container {
+    position: absolute; /* ← 浮在圖片上 */
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 10;
+    pointer-events: auto;
+}
+
+.attraction_carousel .btn_container {
+    z-index: 1;
+    height: 400px;
+    align-items: center;
+    cursor: pointer;
+    padding: 0 10px;
+}
+
+.attraction_carousel .btn_container img {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    flex-shrink: 0;   /* 防止圖片被壓縮 */
+  }
+
+.attraction_container_booking {
+    width: 100%;
+    max-width: 600px;
+}
+
+.attraction_container_booking .input-group {
+    display: flex;
+    position: relative;
+    flex-direction: row;
+    align-items: center;
+}
+
+.attraction_container_booking .input-group label {
+    color: #666;
+    font-size: 16px;
+  }
+
+.attraction_category {
+    max-width: 540px;
+    display: flex;
+    flex-direction: row;
+}
+
+.attraction_board {
+    padding: 20px 15px;
+    background-color: #E8E8E8;
+    border-radius: 5px;
+    width: 100%;
+    max-width: 540px;
+}
+
+.attraction_board h3 {
+    margin: 0;
+    padding: 5px;
+}
+
+.attraction_board p {
+    margin: 0;
+    padding: 5px;
+    color: #666666;
+}
+
+.attraction_board button {
+    background-color: #448899;
+    color: #fff;
+    border-radius: 5px;
+    padding: 10px 20px;
+    margin-top: 25px;
+    margin-bottom: 15px;
+    border-style: none;
+    cursor: pointer;
+}
+
+.attraction_board input {
+    margin: 5px;
+    font-size: 16px;
+    color: #666666;
+}
+
+.attraction_board input label {
+    color: #666666;
+    font-size: 16px;
+}
+
+.container2 {
+    font-size: 16px;
+    color: #666;
+}
+
+.page-index .container2 {
+    min-height: 80vh;
+  }
+  
+  /* 在景點 (attraction) 頁就覆蓋掉，或乾脆不要 min-height */
+  .page-attraction .container2 {
+    min-height: auto; /* 或 40vh、60vh 依需求 */
+    padding-bottom: 120px;
+  }
+
+/*以下為@media*/
+
 @media screen and (min-width: 360px) and (max-width: 600px) {
     .big-box {
         max-width: 100%;
@@ -411,6 +616,30 @@ footer p {
         width: 100%; 
         box-sizing: border-box;
     }
+
+
+    .attraction_container_1 {
+        display: flex;
+        flex-direction: column;
+        height: 760px;
+    }
+
+    .attraction_carousel {
+        position: relative;
+        width: 100%;    /* 或固定 540px 皆可 */
+        max-width: 1200px;
+        height: 350px;
+        overflow: hidden; 
+        border-radius: 5px;
+      }
+
+    .slider {
+        display: flex;
+        overflow-x: auto;
+        scroll-behavior: smooth;
+        width: 100%;
+        /* width: 100%; 不用額外指定會自動為 100% */
+      }
 }
 
 @media screen and (min-width: 601px) and (max-width: 1200px) {
@@ -422,4 +651,43 @@ footer p {
         width: calc((100% - 30px) / 2); 
         box-sizing: border-box;
     }
+
+    .attraction_container_1 {
+        display: flex;
+        flex-direction: column;
+        height: 760px;
+    }
+
+    .attraction_carousel {
+        position: relative;
+        width: 100%;    /* 或固定 540px 皆可 */
+        max-width: 1200px;
+        height: 350px;
+        overflow: hidden; 
+        border-radius: 5px;
+      }
+
+    .slider {
+        display: flex;
+        overflow-x: auto;
+        scroll-behavior: smooth;
+        width: 100%;
+        /* width: 100%; 不用額外指定會自動為 100% */
+      }
+
+
+    .attraction_container_booking {
+        width: 100%;
+        max-width: 1200px;
+    }
+
+      .attraction_board {
+        padding: 20px 15px;
+        background-color: #E8E8E8;
+        border-radius: 5px;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
 }

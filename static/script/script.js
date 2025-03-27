@@ -1,14 +1,24 @@
 let nextPage = 0;
 let isLoading = false;
 let currentKeyword = null; 
+// 加上這行取網址 ID
+const attractionID = window.location.pathname.split("/").pop();
 
 
 document.addEventListener("DOMContentLoaded", () => {
     loadMRTs();
     setupListbarScroll();
     setupSearchEvents();
-    fetchAttractions();
+
+    const isAttractionPage = window.location.pathname.startsWith("/attraction/");
+    if (isAttractionPage) {
+        fetchAttractionID();
+    } else {
+        fetchAttractions();
+    }
 });
+
+
 
 
 const sentinel = document.querySelector(".sentinel");
@@ -88,20 +98,32 @@ function loadCard(attractions) {
     const bigBox = document.querySelector(".big-box");
     if (!bigBox) return;
 
-    attractions.forEach((item) => {
-        const cardFrame = document.createElement("div");
-        cardFrame.classList.add("card-frame");
+    const sentinel = document.querySelector(".sentinel");
 
+    attractions.forEach((item) => {
+        // 外層 <a>
+        const cardLink = document.createElement("a");
+        cardLink.classList.add("card-frame");
+        cardLink.href = `/attraction/${item.id}`;
+
+        // .card（只有圖片 + 標題）
         const card = document.createElement("div");
         card.classList.add("card");
 
+        // 圖片
         const img = document.createElement("img");
         img.src = item.images?.[0] || "./static/img/placeholder.jpg";
         img.alt = item.name;
 
+        // 標題
         const title = document.createElement("h2");
         title.textContent = item.name;
 
+        // 加進 .card
+        card.appendChild(img);
+        card.appendChild(title);
+
+        // .card_category（獨立拉出）
         const cardCategory = document.createElement("div");
         cardCategory.classList.add("card_category");
 
@@ -111,15 +133,15 @@ function loadCard(attractions) {
         const category = document.createElement("p");
         category.textContent = item.category;
 
-        card.appendChild(img);
-        card.appendChild(title);
         cardCategory.appendChild(mrt);
         cardCategory.appendChild(category);
-        cardFrame.appendChild(card);
-        cardFrame.appendChild(cardCategory);
 
-        const sentinel = document.querySelector(".sentinel");
-        bigBox.insertBefore(cardFrame, sentinel);
+        // 組合成 <a> 結構：card + card_category
+        cardLink.appendChild(card);         // 內容卡片
+        cardLink.appendChild(cardCategory); // 資訊欄（在下方）
+
+        // 插入到 DOM
+        bigBox.insertBefore(cardLink, sentinel);
     });
 }
 
@@ -210,3 +232,189 @@ function resetAndFetch() {
     sentinelObserver.observe(sentinel);
     fetchAttractions();
 }
+
+async function fetchAttractionID() {
+    if (isLoading) return;
+    isLoading = true;
+
+    try {
+        const url = `/api/attraction/${attractionID}`;
+        const response = await fetch(url);
+        const data = await response.json();
+
+        loadAttractions(data.data);
+    } catch (error) {
+        console.error("⚠️ Fetch AttractionID Error:", error);
+    } finally {
+        isLoading = false;
+        hideLoading();
+    }
+}
+
+// 修正後的 loadAttractions + setupCarousel
+function loadAttractions(attraction) {
+    const attractionContainer = document.querySelector(".attraction_container_1");
+    const container2 = document.querySelector(".container2");
+    if (!attractionContainer || !container2) return;
+
+    const carousel = document.createElement("div");
+    carousel.className = "attraction_carousel";
+
+    // 加入按鈕
+    const allBtnContainer = document.createElement("div");
+    allBtnContainer.className = "all_btn_container";
+
+    const leftBtn = document.createElement("div");
+    leftBtn.className = "btn_container";
+    leftBtn.innerHTML = `<img src="/static/img/icon/arrow left.svg">`;
+
+    const rightBtn = document.createElement("div");
+    rightBtn.className = "btn_container";
+    rightBtn.innerHTML = `<img src="/static/img/icon/arrow right.svg">`;
+
+    allBtnContainer.appendChild(leftBtn);
+    allBtnContainer.appendChild(rightBtn);
+    carousel.appendChild(allBtnContainer);
+
+    // 加入圖片輪播 slider 容器
+    const slider = document.createElement("div");
+    slider.className = "slider";
+
+    attraction.images.forEach(imgSrc => {
+        const img = document.createElement("img");
+        img.src = imgSrc;
+        img.onerror = () => {
+            img.setAttribute("data-ignore", "true");
+            img.remove();
+        };
+        slider.appendChild(img);
+    });
+
+
+    carousel.appendChild(slider);
+    attractionContainer.appendChild(carousel);
+
+    const bookingDiv = document.createElement("div");
+    bookingDiv.className = "attraction_container_booking";
+    bookingDiv.innerHTML = `
+        <h2>${attraction.name}</h2>
+        <div class="attraction_category">
+            <p class="category">${attraction.category}</p><p>&nbsp;at&nbsp;</p><p class="mrt">${attraction.mrt}</p>
+        </div>
+        <div class="attraction_board">
+            <h3>訂購導覽行程</h3>
+            <p>以此景點為中心的一日行程，帶您探索城市角落故事</p>
+            <div class="input-group">
+                <h3>選擇日期：</h3>
+                <input type="date">
+            </div>
+            <div class="input-group">
+                <h3>選擇時間：</h3>
+                <label><input type="radio" name="time" value="上半天" checked> 上半天</label>
+                <label><input type="radio" name="time" value="下半天"> 下半天</label>
+            </div>
+            <div class="input-group">
+            <h3>導覽費用：</h3><p>新台幣</p><p id="tour-price">--</p><p>元</p>
+            </div>
+            <button class="book">開始預約行程</button>
+        </div>
+    `;
+    attractionContainer.appendChild(bookingDiv);
+
+    const timeRadios = bookingDiv.querySelectorAll('input[name="time"]');
+    const tourPriceP = bookingDiv.querySelector('#tour-price');
+
+    // 預設費用
+    tourPriceP.textContent = '2000';
+
+    // 監聽 radio 切換
+    timeRadios.forEach(radio => {
+    radio.addEventListener('change', () => {
+        if (radio.value === '上半天') {
+        tourPriceP.textContent = '2000';
+        } else {
+        tourPriceP.textContent = '2500';
+        }
+    });
+    });
+
+    const intro = document.querySelector(".attraction_intro");
+    const address = document.querySelector(".attraction_address");
+    const mrt = document.querySelector(".attraction_mrt");
+
+    intro.textContent = attraction.description;
+    address.innerHTML += attraction.address;
+    mrt.innerHTML += attraction.transport;
+
+    setupCarousel();
+}
+
+function setupCarousel() {
+    const sliderEl = document.querySelector(".slider");
+    const leftBtn = document.querySelector(".all_btn_container .btn_container:first-child img");
+    const rightBtn = document.querySelector(".all_btn_container .btn_container:last-child img");
+    const imgs = sliderEl.querySelectorAll("img:not([data-ignore])");
+    const imgCounts = imgs.length;
+  
+    if (imgCounts === 0) return;
+  
+    const slideProps = { index: 0 };
+    const slideProxy = new Proxy(slideProps, {
+      set(obj, prop, value) {
+        if (prop === "index") {
+          if (value < 0 || value >= imgCounts) return;
+          obj[prop] = value;
+          scrollToImage(value);
+          updateDots(value);
+        }
+      }
+    });
+  
+    const dotContainer = document.createElement("div");
+    dotContainer.className = "carousel-dots-wrapper";
+    
+    const dotContainer2 = document.createElement("div");
+    dotContainer2.className = "carousel-dots";
+    
+    dotContainer.appendChild(dotContainer2); // ⬅️ 一定要把 dots 放進 wrapper 中
+    
+    const dots = [];
+    for (let i = 0; i < imgCounts; i++) {
+      const dot = document.createElement("img");
+      dot.src = i === 0
+        ? "/static/img/icon/Union.png"
+        : "/static/img/icon/circle default 1.png";
+      dot.addEventListener("click", () => {
+        slideProxy.index = i;
+      });
+      dotContainer2.appendChild(dot); // ✅ 正確插入 dot 到 dotContainer2
+      dots.push(dot);
+    }
+  
+    sliderEl.parentElement.appendChild(dotContainer); // 插入在 .slider 下方
+  
+    // click events
+    leftBtn.addEventListener("click", () => {
+      slideProxy.index -= 1;
+    });
+    rightBtn.addEventListener("click", () => {
+      slideProxy.index += 1;
+    });
+  
+    // scroll to image
+    function scrollToImage(index) {
+      const target = imgs[index];
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
+      }
+    }
+  
+    // 更新 dots 樣式
+    function updateDots(current) {
+      dots.forEach((dot, i) => {
+        dot.src = i === current
+          ? "/static/img/icon/Union.png"
+          : "/static/img/icon/circle default 1.png";
+      });
+    }
+  }
