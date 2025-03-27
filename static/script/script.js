@@ -1,9 +1,8 @@
 let nextPage = 0;
 let isLoading = false;
 let currentKeyword = null; 
-// 加上這行取網址 ID
-const attractionID = window.location.pathname.split("/").pop();
 
+const attractionID = window.location.pathname.split("/").pop();
 
 document.addEventListener("DOMContentLoaded", () => {
     loadMRTs();
@@ -19,8 +18,6 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
-
-
 const sentinel = document.querySelector(".sentinel");
 const sentinelObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
@@ -32,7 +29,6 @@ const sentinelObserver = new IntersectionObserver((entries) => {
 if (sentinel) {
     sentinelObserver.observe(sentinel);
 }
-
 
 async function loadMRTs() {
     try {
@@ -101,29 +97,29 @@ function loadCard(attractions) {
     const sentinel = document.querySelector(".sentinel");
 
     attractions.forEach((item) => {
-        // 外層 <a>
+        
         const cardLink = document.createElement("a");
         cardLink.classList.add("card-frame");
         cardLink.href = `/attraction/${item.id}`;
 
-        // .card（只有圖片 + 標題）
+        
         const card = document.createElement("div");
         card.classList.add("card");
 
-        // 圖片
+        
         const img = document.createElement("img");
         img.src = item.images?.[0] || "./static/img/placeholder.jpg";
         img.alt = item.name;
 
-        // 標題
+        
         const title = document.createElement("h2");
         title.textContent = item.name;
 
-        // 加進 .card
+        
         card.appendChild(img);
         card.appendChild(title);
 
-        // .card_category（獨立拉出）
+        
         const cardCategory = document.createElement("div");
         cardCategory.classList.add("card_category");
 
@@ -135,12 +131,10 @@ function loadCard(attractions) {
 
         cardCategory.appendChild(mrt);
         cardCategory.appendChild(category);
+        
+        cardLink.appendChild(card);         
+        cardLink.appendChild(cardCategory); 
 
-        // 組合成 <a> 結構：card + card_category
-        cardLink.appendChild(card);         // 內容卡片
-        cardLink.appendChild(cardCategory); // 資訊欄（在下方）
-
-        // 插入到 DOM
         bigBox.insertBefore(cardLink, sentinel);
     });
 }
@@ -184,7 +178,6 @@ function setupSearchEvents() {
         });
     }
 }
-
 
 function showLoading() {
     hideLoading();
@@ -251,7 +244,7 @@ async function fetchAttractionID() {
     }
 }
 
-// 修正後的 loadAttractions + setupCarousel
+
 function loadAttractions(attraction) {
     const attractionContainer = document.querySelector(".attraction_container_1");
     const container2 = document.querySelector(".container2");
@@ -260,7 +253,6 @@ function loadAttractions(attraction) {
     const carousel = document.createElement("div");
     carousel.className = "attraction_carousel";
 
-    // 加入按鈕
     const allBtnContainer = document.createElement("div");
     allBtnContainer.className = "all_btn_container";
 
@@ -275,8 +267,7 @@ function loadAttractions(attraction) {
     allBtnContainer.appendChild(leftBtn);
     allBtnContainer.appendChild(rightBtn);
     carousel.appendChild(allBtnContainer);
-
-    // 加入圖片輪播 slider 容器
+    
     const slider = document.createElement("div");
     slider.className = "slider";
 
@@ -323,11 +314,9 @@ function loadAttractions(attraction) {
 
     const timeRadios = bookingDiv.querySelectorAll('input[name="time"]');
     const tourPriceP = bookingDiv.querySelector('#tour-price');
-
-    // 預設費用
+    
     tourPriceP.textContent = '2000';
 
-    // 監聽 radio 切換
     timeRadios.forEach(radio => {
     radio.addEventListener('change', () => {
         if (radio.value === '上半天') {
@@ -376,7 +365,7 @@ function setupCarousel() {
     const dotContainer2 = document.createElement("div");
     dotContainer2.className = "carousel-dots";
     
-    dotContainer.appendChild(dotContainer2); // ⬅️ 一定要把 dots 放進 wrapper 中
+    dotContainer.appendChild(dotContainer2); 
     
     const dots = [];
     for (let i = 0; i < imgCounts; i++) {
@@ -387,13 +376,12 @@ function setupCarousel() {
       dot.addEventListener("click", () => {
         slideProxy.index = i;
       });
-      dotContainer2.appendChild(dot); // ✅ 正確插入 dot 到 dotContainer2
+      dotContainer2.appendChild(dot); 
       dots.push(dot);
     }
   
-    sliderEl.parentElement.appendChild(dotContainer); // 插入在 .slider 下方
+    sliderEl.parentElement.appendChild(dotContainer); 
   
-    // click events
     leftBtn.addEventListener("click", () => {
       slideProxy.index -= 1;
     });
@@ -401,7 +389,6 @@ function setupCarousel() {
       slideProxy.index += 1;
     });
   
-    // scroll to image
     function scrollToImage(index) {
       const target = imgs[index];
       if (target) {
@@ -409,7 +396,6 @@ function setupCarousel() {
       }
     }
   
-    // 更新 dots 樣式
     function updateDots(current) {
       dots.forEach((dot, i) => {
         dot.src = i === current

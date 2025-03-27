@@ -325,14 +325,14 @@ h2 {
     gap: 30px;
   }
   
-  /* <a> 直接扮演 card-frame 的角色 */
+  
   .card-frame {
-    display: block;           /* 讓它是區塊 */
+    display: block;           
     width: calc((100% - 90px) / 4); 
     border: 2px solid #E8E8E8;
     border-radius: 5px;
-    text-decoration: none;    /* 移除連結下劃線 */
-    color: inherit;           /* 繼承外層文字顏色 */
+    text-decoration: none;    
+    color: inherit;           
     cursor: pointer;
     box-sizing: border-box;
   }
@@ -389,7 +389,7 @@ h2 {
     position: relative;
     padding: 10px;
     display: flex;
-    flex-direction: row;  /* ✅ 正確值 */
+    flex-direction: row;  
     height: 25px;
     background-color: #fff;
     justify-content: space-between;
@@ -422,7 +422,7 @@ footer p {
     color: #fff;
 }
 
-/*以下為attraction獨有的css*/
+
 
 .attraction_container_1 {
 
@@ -444,7 +444,7 @@ footer p {
 }
 .attraction_carousel {
     position: relative;
-    width: 100%;    /* 或固定 540px 皆可 */
+    width: 100%;    
     max-width: 540px;
     height: 400px;
     overflow: hidden; 
@@ -455,12 +455,12 @@ footer p {
     display: flex;
     overflow-x: auto;
     scroll-behavior: smooth;
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none; /* IE 10+ */
+    scrollbar-width: none; 
+    -ms-overflow-style: none; 
   }
   
   .slider::-webkit-scrollbar {
-    display: none; /* Chrome, Safari */
+    display: none; 
   }
 
   .carousel-dots-wrapper {
@@ -476,7 +476,7 @@ footer p {
   .carousel-dots {
     display: flex;
     gap: 6px;
-    position: relative;     /* 或你需要的定位方式 */
+    position: relative;     
     z-index: 20;
     padding: 0;
   }
@@ -489,7 +489,7 @@ footer p {
   }
 
   .slider img {
-    flex: 0 0 100%; /* 每張圖片佔滿整個 slider 區塊 */
+    flex: 0 0 100%; 
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -499,7 +499,7 @@ footer p {
   }
 
 .attraction_carousel .all_btn_container {
-    position: absolute; /* ← 浮在圖片上 */
+    position: absolute; 
     top: 0;
     left: 0;
     height: 100%;
@@ -523,7 +523,7 @@ footer p {
     width: 32px;
     height: 32px;
     object-fit: contain;
-    flex-shrink: 0;   /* 防止圖片被壓縮 */
+    flex-shrink: 0;   
   }
 
 .attraction_container_booking {
@@ -599,13 +599,13 @@ footer p {
     min-height: 80vh;
   }
   
-  /* 在景點 (attraction) 頁就覆蓋掉，或乾脆不要 min-height */
+  
   .page-attraction .container2 {
-    min-height: auto; /* 或 40vh、60vh 依需求 */
+    min-height: auto; 
     padding-bottom: 120px;
   }
 
-/*以下為@media*/
+
 
 @media screen and (min-width: 360px) and (max-width: 600px) {
     .big-box {
@@ -626,7 +626,7 @@ footer p {
 
     .attraction_carousel {
         position: relative;
-        width: 100%;    /* 或固定 540px 皆可 */
+        width: 100%;    
         max-width: 1200px;
         height: 350px;
         overflow: hidden; 
@@ -638,7 +638,7 @@ footer p {
         overflow-x: auto;
         scroll-behavior: smooth;
         width: 100%;
-        /* width: 100%; 不用額外指定會自動為 100% */
+        
       }
 }
 
@@ -660,7 +660,7 @@ footer p {
 
     .attraction_carousel {
         position: relative;
-        width: 100%;    /* 或固定 540px 皆可 */
+        width: 100%;    
         max-width: 1200px;
         height: 350px;
         overflow: hidden; 
@@ -672,7 +672,7 @@ footer p {
         overflow-x: auto;
         scroll-behavior: smooth;
         width: 100%;
-        /* width: 100%; 不用額外指定會自動為 100% */
+        
       }
 
 
