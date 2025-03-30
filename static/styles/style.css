@@ -59,6 +59,7 @@ input[type="radio"] {
 
 .container1 {
     width: 1180px;
+    height: 54px;
     display: flex;
     justify-content: space-between;
     display: flex;
@@ -66,7 +67,7 @@ input[type="radio"] {
     gap: 15px;
     align-items: center;
     margin: 0 auto; 
-    padding: 10px 10px;
+    padding: 0px 10px 0px 10px ;
     z-index: 1001; 
 }
 
@@ -168,11 +169,11 @@ h2 {
 .banner p {
     color: #fff;
     margin: 0px;
+    padding-bottom: 10px;
 }
 
 
 .search {
-    padding-top: 10px;
     display: flex;
     justify-content: flex-start;
     max-width: 460px;
@@ -425,15 +426,16 @@ footer p {
 
 
 .attraction_container_1 {
-
+    border-top: 1px solid #E8E8E8;
     display: flex;
     max-width: 1200px;
     box-sizing: border-box;
     flex-direction: row; 
     justify-content: space-between; 
     width: 100%;
-    margin-top: 60px;
-    padding: 15px;
+    margin-top: 54px;
+    margin-bottom: 20px;
+    padding: 10px 20px;
     display: flex;
     position: relative;
 }
@@ -452,11 +454,13 @@ footer p {
   }
   
   .slider {
+    width: 100%;
+    height: 100%;        
     display: flex;
     overflow-x: auto;
     scroll-behavior: smooth;
-    scrollbar-width: none; 
-    -ms-overflow-style: none; 
+    scrollbar-width: none;
+    scroll-snap-type: x mandatory;
   }
   
   .slider::-webkit-scrollbar {
@@ -489,13 +493,13 @@ footer p {
   }
 
   .slider img {
-    flex: 0 0 100%; 
+    flex: 0 0 100%;
     width: 100%;
-    height: 100%;
-    object-fit: cover;
-    box-sizing: border-box;
+    height: 100%;      
+    object-fit: cover; 
+    object-position: center;
     display: block;
-    border-radius: 5px;
+    scroll-snap-align: start;
   }
 
 .attraction_carousel .all_btn_container {
@@ -583,6 +587,79 @@ footer p {
     margin: 5px;
     font-size: 16px;
     color: #666666;
+    gap: 5px;
+}
+
+.custom-radio input[type="radio"] {
+    display: none;
+  }
+  
+  
+  .custom-radio .radio-mark {
+    display: inline-block;
+    width: 22px;
+    height: 22px;
+    background-color: #fff;
+    border-radius: 50%;
+    vertical-align: middle;
+    position: relative;
+  }
+  
+  
+  .custom-radio input[type="radio"]:checked + .radio-mark::after {
+    content: "";
+    width: 18px;
+    height: 18px;
+    background-color: #448899; 
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .custom-radio {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 5px; 
+  }
+ 
+  .custom-radio label {
+    margin: 0px 4px;
+  } 
+
+  
+  .custom-radio .radio-text {
+    padding-left: 5px;
+    padding-right: 5px;
+    color: #666;
+    font-size: 16px;
+  }
+
+  .custom-radio {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 5px;
+  }
+  
+  
+  .custom-radio .radio-label {
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+  
+  
+  .custom-radio .radio-text {
+    padding-left: 5px;
+    padding-right: 4px;
+    color: #666;
+    font-size: 16px;
+  }
+
+.attraction_board input[type="date"] {
+    border: none;
+    outline: none;
+    padding: 5px 10px;
 }
 
 .attraction_board input label {
@@ -600,11 +677,58 @@ footer p {
   }
   
   
-  .page-attraction .container2 {
+.page-attraction .container2 {
+    border-top: 1px solid #E8E8E8;
     min-height: auto; 
     padding-bottom: 120px;
-  }
+    padding-top: 40px;
+}
 
+
+@media screen and (min-width: 601px) and (max-width: 1200px) {
+    .big-box {
+        max-width: 100%; 
+    }
+
+    .card-frame {
+        width: calc((100% - 30px) / 2); 
+        box-sizing: border-box;
+    }
+
+    .attraction_container_1 {
+        margin-top: 54px;
+        padding: 0px;
+        padding-top: 0px;
+        display: flex;
+        flex-direction: column;
+        height: 760px;
+    }
+
+    .attraction_carousel {
+        position: relative;
+        width: 100%;    
+        max-width: 1200px;
+        min-height: 350px;
+        overflow: hidden; 
+        border-radius: 5px;
+      }
+
+
+    .attraction_container_booking {
+        margin: 20px 15px;
+        width: calc(100% - 30px);
+        max-width: 1200px;
+    }
+
+      .attraction_board {
+        background-color: #E8E8E8;
+        border-radius: 5px;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+}
 
 
 @media screen and (min-width: 360px) and (max-width: 600px) {
@@ -619,70 +743,30 @@ footer p {
 
 
     .attraction_container_1 {
+        margin-top: 54px;
+        padding-top: 0px;
         display: flex;
         flex-direction: column;
         height: 760px;
+        padding: 0px;
     }
 
     .attraction_carousel {
         position: relative;
         width: 100%;    
         max-width: 1200px;
-        height: 350px;
+        min-height: 350px;
         overflow: hidden; 
         border-radius: 5px;
       }
-
-    .slider {
-        display: flex;
-        overflow-x: auto;
-        scroll-behavior: smooth;
-        width: 100%;
-        
-      }
-}
-
-@media screen and (min-width: 601px) and (max-width: 1200px) {
-    .big-box {
-        max-width: 100%; 
-    }
-
-    .card-frame {
-        width: calc((100% - 30px) / 2); 
-        box-sizing: border-box;
-    }
-
-    .attraction_container_1 {
-        display: flex;
-        flex-direction: column;
-        height: 760px;
-    }
-
-    .attraction_carousel {
-        position: relative;
-        width: 100%;    
-        max-width: 1200px;
-        height: 350px;
-        overflow: hidden; 
-        border-radius: 5px;
-      }
-
-    .slider {
-        display: flex;
-        overflow-x: auto;
-        scroll-behavior: smooth;
-        width: 100%;
-        
-      }
-
 
     .attraction_container_booking {
-        width: 100%;
+        margin: 20px 15px;
+        width: calc(100% - 30px);
         max-width: 1200px;
     }
 
       .attraction_board {
-        padding: 20px 15px;
         background-color: #E8E8E8;
         border-radius: 5px;
         width: 100%;

@@ -301,8 +301,19 @@ function loadAttractions(attraction) {
             </div>
             <div class="input-group">
                 <h3>選擇時間：</h3>
-                <label><input type="radio" name="time" value="上半天" checked> 上半天</label>
-                <label><input type="radio" name="time" value="下半天"> 下半天</label>
+                <label class="custom-radio">
+                <input type="radio" name="time" value="上半天" checked/>
+                <span class="radio-mark"></span>
+                <span class="radio-label">
+                    <span class="radio-text">上半天</span>
+                </span>
+                <label class="custom-radio">
+                <input type="radio" name="time" value="下半天" />
+                <span class="radio-mark"></span>
+                <span class="radio-label">
+                    <span class="radio-text">下半天</span>
+                </span>
+                </label>
             </div>
             <div class="input-group">
             <h3>導覽費用：</h3><p>新台幣</p><p id="tour-price">--</p><p>元</p>
@@ -403,4 +414,17 @@ function setupCarousel() {
           : "/static/img/icon/circle default 1.png";
       });
     }
+
+    function debounce(fn, delay = 200) {
+        let timer;
+        return (...args) => {
+          clearTimeout(timer);
+          timer = setTimeout(() => fn(...args), delay);
+        };
+      }
+      
+      window.addEventListener("resize", debounce(() => {
+        scrollToImage(slideProps.index);
+      }, 200));
+      
   }
