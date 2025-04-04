@@ -38,6 +38,158 @@ input[type="radio"] {
   cursor: pointer;
 }
 
+.mask {
+    position: fixed;
+    z-index: 30;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.25);
+    display: none;
+    cursor: pointer;
+}
+
+.mask.active {
+    display: block;
+}
+
+.login_container {
+    position: absolute;
+    z-index: 100;
+    border-radius: 0 5px 5px 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.login_container h2 {
+    font-size: 27px;
+    color: #666666;
+}
+
+.login_container input {
+    padding: 15px;
+    border-radius: 5px;
+    border: 1px solid #CCCCCC;   
+    outline: none;               
+    box-shadow: none;            
+    width: 100%;
+}
+
+.login_container input:focus {
+    outline: 2px solid #000000;  
+}
+
+
+.form_elements button {
+    padding: 15px;
+    border-radius: 5px;
+    background-color: #448899;
+    width: 100%;
+    color: #fff;
+    font-size: 16px;
+    display: flex;
+    justify-content: center;
+    border-style: none;
+    cursor: pointer;
+}
+
+.switch-to-signup,
+.switch-to-login {
+    padding: 0px;
+    margin: 0px;
+    cursor: pointer;
+    margin-top: -10px;
+}
+
+
+.login_dialogue {
+    left: 50%;
+    top: 80px;
+    width: 340px;
+    height: auto;
+    transform: translate(-50%);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+    position: fixed;                  
+    background-color: white;
+    border-radius: 5px;
+    display: flex;                    
+    flex-direction: column;          
+    align-items: center;             
+    justify-content: center;         
+    
+    opacity: 0;                      
+    pointer-events: none;           
+    transition: opacity 0.2s ease;
+
+}
+
+.login_dialogue.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.decorator_bar {
+    width: 340px;
+    height: 10px;
+    top: 0px;
+    background: linear-gradient(to right, #66AABB, #337788);
+    border-radius: 5px 5px 0 0;
+    position: fixed;                  
+    z-index: 100;
+}
+
+.form_elements {
+    width: 310px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center; 
+    gap: 10px;
+}
+
+.close {
+    position: fixed; 
+    right: 17px;
+    padding: 0px;
+    top: 27px;
+    width: 16px;
+    height: 16px;
+    z-index: 150;
+    border-style: none;
+    background-color: #fff;
+    cursor: pointer;
+}
+
+.close img {
+    width: 100%;
+    height: 100%;
+}
+
+.form {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  
+.form.active {
+display: flex;
+}
+
+.login,
+.logout {
+    display: none;
+}
+
+.login.active,
+.logout.active {
+    display: block; 
+}
+
+
+
 .nav {
     display: flex;
     justify-content: space-between;
@@ -54,7 +206,7 @@ input[type="radio"] {
     position: fixed; 
     top: 0; 
     left: 0;
-    z-index: 1000; 
+    z-index: 10; 
     border-bottom: 1px solid #E8E8E8;
 }
 
@@ -69,14 +221,14 @@ input[type="radio"] {
     align-items: center;
     margin: 0 auto; 
     padding: 0px 10px 0px 10px ;
-    z-index: 1001; 
+    z-index: 11; 
 }
 
 .container1 h1 {
     margin: 15px;
 }
 
-.menu{
+.menu {
     display: flex;
 }
 
@@ -85,6 +237,11 @@ input[type="radio"] {
     color: #666;
     font-size: 16px;
     padding: 0 10px 0 10px;
+}
+
+.error {
+    color: red;
+    font-size: 16px;
 }
 
 .body {
@@ -123,7 +280,6 @@ h2 {
     align-items: center;
     width: 100%; 
     max-width: 1920px; 
-    padding-top: 10px; 
     height: 374px; 
     overflow: hidden;
 }
@@ -132,7 +288,7 @@ h2 {
 .banner img {
     width: 100%; 
     max-width: 1920px; 
-    height: 320px; 
+    height: 374px; 
     object-fit: cover; 
     display: block; 
     position: absolute; 

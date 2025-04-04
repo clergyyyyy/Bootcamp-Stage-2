@@ -1,14 +1,20 @@
-from fastapi import FastAPI, Path, Query, Request
+from fastapi import FastAPI, Path, Query, Request, Form
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi import HTTPException
 import mysql.connector
 from dotenv import load_dotenv
 from fastapi.staticfiles import StaticFiles
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import Depends
+from utils.jwt import create_access_token, decode_access_token
 import os
 
 app = FastAPI()
+
 app.mount("/static", StaticFiles(directory="static"), name="static")
 load_dotenv()
+auth_scheme = HTTPBearer()
+
 
 DB_CONFIG = {
     "host": os.getenv("DB_HOST"),
@@ -16,6 +22,18 @@ DB_CONFIG = {
     "password": os.getenv("DB_PASSWORD"),
     "database": os.getenv("DB_NAME")
 }
+
+DB_HOST = os.getenv("DB_HOST")
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_NAME = os.getenv("DB_NAME")
+
+conn = mysql.connector.connect(
+    host=DB_HOST,
+    user=DB_USER,
+    password=DB_PASSWORD,
+    database=DB_NAME
+)
 
 # Static Pages (Never Modify Code in this Block)
 @app.get("/", include_in_schema=False)
@@ -150,6 +168,12 @@ def get_mrt_list():
     mrt_list = [row["mrt"] for row in rows if row["mrt"]]
     return mrt_list
 
+def get_member_username(username: str):
+    query = "SELECT * FROM member WHERE username = %s"
+    with mysql.connector.connect(**DB_CONFIG) as conn:
+        with conn.cursor(dictionary=True) as cursor:
+            cursor.execute(query, (username,))
+            return cursor.fetchone()
 
 @app.get("/api/attractions")
 async def attractions_api(
@@ -170,6 +194,13 @@ async def attractions_api(
         "nextPage": next_page,
         "data": attractions_data
     }, status_code=200)
+
+def add_member_username(name, username, password):
+    with mysql.connector.connect(**DB_CONFIG) as conn:
+        with conn.cursor(dictionary=True) as cursor:
+            query = "INSERT INTO member (name, username, password) VALUES (%s, %s, %s)"
+            cursor.execute(query, (name, username, password))
+            conn.commit()
 
 
 @app.get("/api/attraction/{attractionId}")
@@ -195,3 +226,43 @@ async def mrts_api():
         )
 
     return JSONResponse(content={"data": mrt_data}, status_code=200)
+
+@app.post("/api/user/auth")
+async def signin(account: str = Form(...), password: str = Form(...)):
+    user = get_member_username(account)
+    if not user or user["password"] != password:
+        raise HTTPException(status_code=400, detail="帳號或密碼錯誤")
+
+    token = create_access_token({
+        "user_id": user["id"],
+        "username": user["username"]
+    })
+
+    return JSONResponse({"token": token})
+
+@app.put("/api/user/auth")
+def verify_user_token(credentials: HTTPAuthorizationCredentials = Depends(auth_scheme)):
+    token = credentials.credentials
+    payload = decode_access_token(token)
+    if not payload:
+        raise HTTPException(status_code=401, detail="Token 無效或過期")
+
+    return JSONResponse({
+        "data": {
+            "id": payload["user_id"],
+            "username": payload["username"]
+        }
+    })
+
+@app.post("/api/user")
+async def signup(name: str = Form(...), account: str = Form(...), password: str = Form(...)):
+    user = get_member_username(account)
+    if user :
+        return JSONResponse({
+            "error": True,
+            "message": "重複e-mail或其他原因"
+        }, status_code=400)
+    add_member_username(name, account, password)
+    return JSONResponse({
+        "ok": True
+    }, status_code=200)

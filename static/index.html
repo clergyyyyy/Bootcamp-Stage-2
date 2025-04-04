@@ -9,6 +9,37 @@
     </style>
 </head>
 <body class="page-index">
+    <div class="login_container">
+        <div class="login_dialogue">
+            <div class="decorator_bar"></div>
+            <button class="close">
+                <img src="/static/img/icon/icon_close.png" alt="close">
+            </button>
+            <div class="form login_elements active">
+                <div class="form_elements">
+                <h2>登入會員帳號</h2>
+                <input type="email" id="login-email" placeholder="輸入電子信箱">
+                <input type="password" id="login-password" placeholder="輸入密碼">
+                <button class="signin-btn" type="submit">登入帳戶</button>
+                <div id="login-error" class="error"></div>
+                <p class="switch-to-signup">還沒有帳戶？點此註冊</p>
+                </div>
+            </div>
+
+            <div class="form signup_elements">
+                <div class="form_elements">
+                <h2>註冊會員帳號</h2>
+                <input type="text" id="signup-name" placeholder="輸入姓名">
+                <input type="email" id="signup-email" placeholder="輸入電子信箱">
+                <input type="password" id="signup-password" placeholder="輸入密碼">
+                <button class="signup-btn" type="submit">註冊新帳戶</button>
+                <div id="signup-error" class="error"></div>
+                <p class="switch-to-login">已有帳戶？點此登入</p>
+              </div>
+              </div>
+        </div>
+    </div>
+    <div class="mask"></div>
     <div class="header">
         <div class="navigation">
             <div class="container1">
@@ -16,8 +47,9 @@
                 <div class="menu-container">
                     <div class="nav">
                         <div class="menu">
-                            <a href="/item1" class="item">預定行程</a>
-                            <a href="/item2" class="item">登入/註冊</a>
+                            <a href="#" class="item book">預定行程</a>
+                            <a href="#" class="item login">登入/註冊</a>
+                            <a href="#" class="item logout">登出系統</a>
                         </div>
                     </div>
                 </div>
