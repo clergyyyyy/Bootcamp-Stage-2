@@ -8,6 +8,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi import Depends
 from utils.jwt import create_access_token, decode_access_token
 import os
+from pydantic import BaseModel
 
 app = FastAPI()
 
@@ -27,6 +28,15 @@ DB_HOST = os.getenv("DB_HOST")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_NAME = os.getenv("DB_NAME")
+
+class SignupForm(BaseModel):
+    name: str
+    email: str
+    password: str
+
+class SigninForm(BaseModel):
+    email: str
+    password: str
 
 conn = mysql.connector.connect(
     host=DB_HOST,
@@ -52,6 +62,20 @@ async def booking(request: Request):
 async def thankyou(request: Request):
     return FileResponse("./static/thankyou.html", media_type="text/html")
 
+
+def get_member_by_email(email: str):
+    query = "SELECT * FROM member WHERE username = %s"
+    with mysql.connector.connect(**DB_CONFIG) as conn:
+        with conn.cursor(dictionary=True) as cursor:
+            cursor.execute(query, (email,))
+            return cursor.fetchone()
+
+def add_member(name: str, email: str, password: str):
+    with mysql.connector.connect(**DB_CONFIG) as conn:
+        with conn.cursor(dictionary=True) as cursor:
+            query = "INSERT INTO member (name, username, password) VALUES (%s, %s, %s)"
+            cursor.execute(query, (name, email, password))
+            conn.commit()
 
 def get_attractions_list(page: int = 0, keyword: str = None):
     """
@@ -227,42 +251,55 @@ async def mrts_api():
 
     return JSONResponse(content={"data": mrt_data}, status_code=200)
 
-@app.post("/api/user/auth")
-async def signin(account: str = Form(...), password: str = Form(...)):
-    user = get_member_username(account)
-    if not user or user["password"] != password:
-        raise HTTPException(status_code=400, detail="帳號或密碼錯誤")
-
-    token = create_access_token({
-        "user_id": user["id"],
-        "username": user["username"]
-    })
-
-    return JSONResponse({"token": token})
-
 @app.put("/api/user/auth")
-def verify_user_token(credentials: HTTPAuthorizationCredentials = Depends(auth_scheme)):
+async def signin(form: SigninForm):
+    user = get_member_by_email(form.email)
+    if not user or user["password"] != form.password:
+        return JSONResponse(status_code=400, content={
+            "error": True,
+            "message": "帳號或密碼錯誤"
+        })
+    try:
+        token = create_access_token({
+            "user_id": user["id"],
+            "name": user["name"],
+            "email": user["username"]
+        })
+        return {"token": token}
+    except:
+        return JSONResponse(status_code=500, content={
+            "error": True,
+            "message": "伺服器內部錯誤"
+        })
+
+@app.get("/api/user/auth")
+def get_user_auth(credentials: HTTPAuthorizationCredentials = Depends(auth_scheme)):
     token = credentials.credentials
     payload = decode_access_token(token)
     if not payload:
-        raise HTTPException(status_code=401, detail="Token 無效或過期")
-
-    return JSONResponse({
-        "data": {
-            "id": payload["user_id"],
-            "username": payload["username"]
-        }
-    })
+        return JSONResponse(content={"data": None})
+    
+    return {
+      "data": {
+        "id": payload["user_id"],
+        "name": payload["name"],
+        "email": payload["email"]
+      }
+    }
 
 @app.post("/api/user")
-async def signup(name: str = Form(...), account: str = Form(...), password: str = Form(...)):
-    user = get_member_username(account)
-    if user :
-        return JSONResponse({
+async def signup_api(form: SignupForm):
+    user = get_member_by_email(form.email)
+    if user:
+        return JSONResponse(status_code=400, content={
             "error": True,
-            "message": "重複e-mail或其他原因"
-        }, status_code=400)
-    add_member_username(name, account, password)
-    return JSONResponse({
-        "ok": True
-    }, status_code=200)
+            "message": "Email 已被註冊"
+        })
+    try:
+        add_member(form.name, form.email, form.password)
+        return {"ok": True}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={
+            "error": True,
+            "message": "伺服器內部錯誤"
+        })

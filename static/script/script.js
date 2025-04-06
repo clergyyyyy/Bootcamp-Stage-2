@@ -99,29 +99,23 @@ function loadCard(attractions) {
     const sentinel = document.querySelector(".sentinel");
 
     attractions.forEach((item) => {
-        
         const cardLink = document.createElement("a");
         cardLink.classList.add("card-frame");
         cardLink.href = `/attraction/${item.id}`;
 
-        
         const card = document.createElement("div");
         card.classList.add("card");
 
-        
         const img = document.createElement("img");
         img.src = item.images?.[0] || "./static/img/placeholder.jpg";
         img.alt = item.name;
 
-        
         const title = document.createElement("h2");
         title.textContent = item.name;
 
-        
         card.appendChild(img);
         card.appendChild(title);
 
-        
         const cardCategory = document.createElement("div");
         cardCategory.classList.add("card_category");
 
@@ -443,7 +437,6 @@ function setupLoginDialogue() {
     const formSignup = document.querySelector(".form.signup_elements");
     const logoutBtn = document.querySelector(".logout");
     
-    
     if (!document.body.classList.contains("page-index") &&
     !document.body.classList.contains("page-attraction")) return;
 
@@ -451,7 +444,7 @@ function setupLoginDialogue() {
         e.preventDefault();
         mask.classList.add("active");
         loginDialogue.classList.toggle("active");
-        
+
         const signinBtn = document.querySelector(".signin-btn");
         if (signinBtn) {
             signinBtn.addEventListener("click", (e) => {
@@ -479,7 +472,8 @@ function setupLoginDialogue() {
         loginDialogue.classList.remove("active");
     });
 
-    console.log("切換註冊click事件已綁定：", switchToSignup);
+
+    console.log("切換註冊表單點擊事件已綁定：", switchToSignup);
 
     switchToSignup.addEventListener("click", () => {
         formLogin.classList.remove("active");
@@ -498,36 +492,39 @@ function setupLoginDialogue() {
 }
 
 async function signin() {
-    const account = document.getElementById("login-email").value.trim();
+    const email = document.getElementById("login-email").value.trim();
     const password = document.getElementById("login-password").value.trim();
     const errorDiv = document.getElementById("login-error");
-    errorDiv.textContent = ""; 
+    errorDiv.textContent = "";
 
-    if (!account || !password) {
-        alert("請填寫帳號與密碼");
+    if (!email || !password) {
+        errorDiv.textContent = "請填寫帳號與密碼";
         return;
     }
 
     try {
-        
         const res = await fetch("/api/user/auth", {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: new URLSearchParams({ account, password }),
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ email, password })
         });
 
         const data = await res.json();
         if (!res.ok) {
-            errorDiv.textContent = data.detail || "登入失敗";
+            errorDiv.textContent = data.message || "登入失敗";
             return;
         }
 
         const token = data.token;
-        localStorage.setItem("token", token); 
+        localStorage.setItem("token", token);
 
         const verifyRes = await fetch("/api/user/auth", {
-            method: "PUT",
-            headers: { Authorization: `Bearer ${token}` },
+            method: "GET",
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
         });
 
         const verifyData = await verifyRes.json();
@@ -535,27 +532,26 @@ async function signin() {
             console.log("登入成功 ✅ 使用者資料：", verifyData.data);
             document.querySelector(".login_dialogue").classList.remove("active");
             document.querySelector(".mask").classList.remove("active");
-
-            window.location.reload();
-            
+            window.location.reload()
         } else {
-            console.error("登入錯誤", err);
-            errorDiv.textContent = "登入過程發生錯誤，請稍後再試";
+            console.error("登入驗證失敗：", verifyData);
+            errorDiv.textContent = "登入驗證失敗，請稍後再試";
         }
 
     } catch (err) {
         console.error("登入錯誤", err);
-        alert("登入過程發生錯誤");
+        errorDiv.textContent = "登入過程發生錯誤";
     }
 }
+
 
 async function signup() {
     const name = document.getElementById("signup-name").value.trim();
     const account = document.getElementById("signup-email").value.trim();
     const password = document.getElementById("signup-password").value.trim();
 
-    if (!name ||!account || !password) {
-        alert("請填寫姓名、帳號與密碼");
+    if (!name || !email || !password) {
+        errorDiv.textContent = "請填寫姓名、帳號與密碼";
         return;
     }
 
@@ -567,15 +563,14 @@ async function signup() {
 
         const data = await res.json();
         if (!res.ok) {
-            alert(data.detail || "註冊失敗");
+            errorDiv.textContent = "註冊失敗";
             return;
         }
         alert("註冊成功！");
         window.location.reload();
-            
         } catch (err) {
         console.error("註冊錯誤", err);
-        alert("註冊過程發生錯誤");
+        errorDiv.textContent = "註冊過程發生錯誤";
     }
 }
 
@@ -584,7 +579,7 @@ function checkAuthStatus() {
     const loginBtn = document.querySelector(".login");
     const logoutBtn = document.querySelector(".logout");
 
-    if (!loginBtn || !logoutBtn) return; 
+    if (!loginBtn || !logoutBtn) return;
 
     if (token) {
         loginBtn.style.display = "none";
@@ -595,15 +590,13 @@ function checkAuthStatus() {
     }
 }
 
-function logout(reason = "manual") {    
+function logout(reason = "manual") {
     localStorage.removeItem("token");
-
     if (reason === "manual") {
         alert("已成功登出！");
     } else if (reason === "expired") {
         alert("登入已過期，請重新登入。");
     }
-
     window.location.reload();
 }
 
