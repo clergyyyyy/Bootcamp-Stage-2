@@ -547,8 +547,13 @@ async function signin() {
 
 async function signup() {
     const name = document.getElementById("signup-name").value.trim();
-    const account = document.getElementById("signup-email").value.trim();
+    const email = document.getElementById("signup-email").value.trim();  // <-- rename
     const password = document.getElementById("signup-password").value.trim();
+
+    const errorDiv = document.getElementById("signup-error");
+    errorDiv.textContent = "";
+
+    console.log("email欄位綁定", email);
 
     if (!name || !email || !password) {
         errorDiv.textContent = "請填寫姓名、帳號與密碼";
@@ -558,7 +563,10 @@ async function signup() {
     try {
         const res = await fetch("/api/user", {
             method: "POST",
-            body: new URLSearchParams({ name, account, password }),
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ name, email, password })
         });
 
         const data = await res.json();
@@ -574,17 +582,41 @@ async function signup() {
     }
 }
 
-function checkAuthStatus() {
+async function checkAuthStatus() {
     const token = localStorage.getItem("token");
     const loginBtn = document.querySelector(".login");
     const logoutBtn = document.querySelector(".logout");
 
     if (!loginBtn || !logoutBtn) return;
 
-    if (token) {
-        loginBtn.style.display = "none";
-        logoutBtn.style.display = "flex";
-    } else {
+    // 沒token的case
+    if (!token) {
+        loginBtn.style.display = "flex";
+        logoutBtn.style.display = "none";
+    }
+
+    // 有token call後端驗證的case
+    try {
+        const res = await fetch("/api/user/auth", {
+            method: "GET",
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.data) {
+            loginBtn.style.display = "none";
+            logoutBtn.style.display = "flex";
+        } else {
+            localStorage.removeItem("token");
+            loginBtn.style.display = "flex";
+            logoutBtn.style.display = "none";
+        }
+    } catch (error) {
+        console.error("checkAuthStatus有誤", error);
+        localStorage.removeItem("token");
         loginBtn.style.display = "flex";
         logoutBtn.style.display = "none";
     }
