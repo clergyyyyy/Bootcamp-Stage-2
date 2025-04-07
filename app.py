@@ -1,14 +1,21 @@
-from fastapi import FastAPI, Path, Query, Request
+from fastapi import FastAPI, Path, Query, Request, Form
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi import HTTPException
 import mysql.connector
 from dotenv import load_dotenv
 from fastapi.staticfiles import StaticFiles
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import Depends
+from utils.jwt import create_access_token, decode_access_token
 import os
+from pydantic import BaseModel
 
 app = FastAPI()
+
 app.mount("/static", StaticFiles(directory="static"), name="static")
 load_dotenv()
+auth_scheme = HTTPBearer()
+
 
 DB_CONFIG = {
     "host": os.getenv("DB_HOST"),
@@ -16,6 +23,27 @@ DB_CONFIG = {
     "password": os.getenv("DB_PASSWORD"),
     "database": os.getenv("DB_NAME")
 }
+
+DB_HOST = os.getenv("DB_HOST")
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_NAME = os.getenv("DB_NAME")
+
+class SignupForm(BaseModel):
+    name: str
+    email: str
+    password: str
+
+class SigninForm(BaseModel):
+    email: str
+    password: str
+
+conn = mysql.connector.connect(
+    host=DB_HOST,
+    user=DB_USER,
+    password=DB_PASSWORD,
+    database=DB_NAME
+)
 
 # Static Pages (Never Modify Code in this Block)
 @app.get("/", include_in_schema=False)
@@ -34,6 +62,20 @@ async def booking(request: Request):
 async def thankyou(request: Request):
     return FileResponse("./static/thankyou.html", media_type="text/html")
 
+
+def get_member_by_email(email: str):
+    query = "SELECT * FROM member WHERE username = %s"
+    with mysql.connector.connect(**DB_CONFIG) as conn:
+        with conn.cursor(dictionary=True) as cursor:
+            cursor.execute(query, (email,))
+            return cursor.fetchone()
+
+def add_member(name: str, email: str, password: str):
+    with mysql.connector.connect(**DB_CONFIG) as conn:
+        with conn.cursor(dictionary=True) as cursor:
+            query = "INSERT INTO member (name, username, password) VALUES (%s, %s, %s)"
+            cursor.execute(query, (name, email, password))
+            conn.commit()
 
 def get_attractions_list(page: int = 0, keyword: str = None):
     """
@@ -150,6 +192,12 @@ def get_mrt_list():
     mrt_list = [row["mrt"] for row in rows if row["mrt"]]
     return mrt_list
 
+def get_member_username(username: str):
+    query = "SELECT * FROM member WHERE username = %s"
+    with mysql.connector.connect(**DB_CONFIG) as conn:
+        with conn.cursor(dictionary=True) as cursor:
+            cursor.execute(query, (username,))
+            return cursor.fetchone()
 
 @app.get("/api/attractions")
 async def attractions_api(
@@ -170,6 +218,13 @@ async def attractions_api(
         "nextPage": next_page,
         "data": attractions_data
     }, status_code=200)
+
+def add_member_username(name, username, password):
+    with mysql.connector.connect(**DB_CONFIG) as conn:
+        with conn.cursor(dictionary=True) as cursor:
+            query = "INSERT INTO member (name, username, password) VALUES (%s, %s, %s)"
+            cursor.execute(query, (name, username, password))
+            conn.commit()
 
 
 @app.get("/api/attraction/{attractionId}")
@@ -195,3 +250,56 @@ async def mrts_api():
         )
 
     return JSONResponse(content={"data": mrt_data}, status_code=200)
+
+@app.put("/api/user/auth")
+async def signin(form: SigninForm):
+    user = get_member_by_email(form.email)
+    if not user or user["password"] != form.password:
+        return JSONResponse(status_code=400, content={
+            "error": True,
+            "message": "帳號或密碼錯誤"
+        })
+    try:
+        token = create_access_token({
+            "user_id": user["id"],
+            "name": user["name"],
+            "email": user["username"]
+        })
+        return {"token": token}
+    except:
+        return JSONResponse(status_code=500, content={
+            "error": True,
+            "message": "伺服器內部錯誤"
+        })
+
+@app.get("/api/user/auth")
+def get_user_auth(credentials: HTTPAuthorizationCredentials = Depends(auth_scheme)):
+    token = credentials.credentials
+    payload = decode_access_token(token)
+    if not payload:
+        return JSONResponse(content={"data": None})
+    
+    return {
+      "data": {
+        "id": payload["user_id"],
+        "name": payload["name"],
+        "email": payload["email"]
+      }
+    }
+
+@app.post("/api/user")
+async def signup_api(form: SignupForm):
+    user = get_member_by_email(form.email)
+    if user:
+        return JSONResponse(status_code=400, content={
+            "error": True,
+            "message": "Email 已被註冊"
+        })
+    try:
+        add_member(form.name, form.email, form.password)
+        return {"ok": True}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={
+            "error": True,
+            "message": "伺服器內部錯誤"
+        })
