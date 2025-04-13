@@ -881,7 +881,7 @@ footer.no-booking p {
 
 .page-booking .booking_container_attraction {  
     display: flex;          
-    align-items: center;    
+    align-items: flex-start;    
     width: 100%;
     max-width: 980px;
     margin-bottom: 40px;
@@ -904,6 +904,8 @@ footer.no-booking p {
     max-width: 700px;
     color: #666666;
     gap: 10px;
+    display: flex;
+    flex-direction: column;
 }
 
 .booking_container_attraction .delete {
