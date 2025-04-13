@@ -11,14 +11,26 @@ document.addEventListener("DOMContentLoaded", () => {
     setupLoginDialogue();
     checkAuthStatus();
 
-    const isAttractionPage = window.location.pathname.startsWith("/attraction/");
+    const isAttractionPage = window.location.pathname.startsWith("/attraction");
+    const isBookingPage = window.location.pathname.startsWith("/booking");
+
     if (isAttractionPage) {
         fetchAttractionID();
+    } else if (isBookingPage) {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            
+            document.querySelector("footer")?.classList.add("no-booking");
+            setTimeout(() => {
+                document.querySelector(".login")?.click();
+            }, 0);
+        } else {
+            handleBookingPage();  
+        }
     } else {
         fetchAttractions();
     }
 });
-
 
 const sentinel = document.querySelector(".sentinel");
 const sentinelObserver = new IntersectionObserver((entries) => {
@@ -240,7 +252,6 @@ async function fetchAttractionID() {
     }
 }
 
-
 function loadAttractions(attraction) {
     const attractionContainer = document.querySelector(".attraction_container_1");
     const container2 = document.querySelector(".container2");
@@ -277,7 +288,6 @@ function loadAttractions(attraction) {
         slider.appendChild(img);
     });
 
-
     carousel.appendChild(slider);
     attractionContainer.appendChild(carousel);
 
@@ -300,38 +310,87 @@ function loadAttractions(attraction) {
                 <label class="custom-radio">
                 <input type="radio" name="time" value="上半天" checked/>
                 <span class="radio-mark"></span>
-                <span class="radio-label">
-                    <span class="radio-text">上半天</span>
-                </span>
+                <span class="radio-label"><span class="radio-text">上半天</span></span>
+                </label>
                 <label class="custom-radio">
                 <input type="radio" name="time" value="下半天" />
                 <span class="radio-mark"></span>
-                <span class="radio-label">
-                    <span class="radio-text">下半天</span>
-                </span>
+                <span class="radio-label"><span class="radio-text">下半天</span></span>
                 </label>
             </div>
             <div class="input-group">
-            <h3>導覽費用：</h3><p>新台幣</p><p id="tour-price">--</p><p>元</p>
+                <h3>導覽費用：</h3><p>新台幣</p><p class="tour-price">--</p><p>元</p>
             </div>
             <button class="book">開始預約行程</button>
         </div>
     `;
     attractionContainer.appendChild(bookingDiv);
 
-    const timeRadios = bookingDiv.querySelectorAll('input[name="time"]');
-    const tourPriceP = bookingDiv.querySelector('#tour-price');
-    
+    const tourPriceP = bookingDiv.querySelector(".tour-price");
     tourPriceP.textContent = '2000';
 
+    const timeRadios = bookingDiv.querySelectorAll('input[name="time"]');
     timeRadios.forEach(radio => {
-    radio.addEventListener('change', () => {
-        if (radio.value === '上半天') {
-        tourPriceP.textContent = '2000';
-        } else {
-        tourPriceP.textContent = '2500';
-        }
+        radio.addEventListener('change', () => {
+            tourPriceP.textContent = radio.value === '上半天' ? '2000' : '2500';
+        });
     });
+
+    const bookBtn = bookingDiv.querySelector(".book");
+    console.log("book btn綁定", bookBtn);
+
+    bookBtn.addEventListener("click", async () => {
+        const dateInput = bookingDiv.querySelector("input[type='date']");
+        const selectDate = dateInput.value;
+        const selectTime = bookingDiv.querySelector("input[name='time']:checked")?.value;
+        const price = parseInt(tourPriceP.textContent);
+        const attractionId = parseInt(attraction.id);  
+
+        const token = localStorage.getItem("token");
+        if (!token) {
+
+            localStorage.setItem("pendingBooking", JSON.stringify({
+                attractionId,
+                selectDate,
+                selectTime,
+                price}));
+
+            document.querySelector(".login_dialogue").classList.add("active");
+            document.querySelector(".mask").classList.add("active");
+            return;
+        }
+
+        if (!selectDate || !selectTime || !price || !attractionId) {
+            alert("您的預定行程資訊未填寫完整");
+            return;
+        }
+
+        try {
+            const res = await fetch("/api/booking", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    price,
+                    attractionId,
+                    date: selectDate,
+                    time: selectTime === "上半天" ? "morning" : "afternoon",
+                })
+            });
+
+            const data = await res.json();
+            if (res.ok && data.ok) {
+                window.location.href = "/booking";
+            } else {
+                alert(data.message || "預約失敗，請重新預約");
+            }
+        } 
+        catch (error) {
+            console.error("發生了問題", error);
+            alert("伺服器發生錯誤，請稍後再試");
+        }
     });
 
     const intro = document.querySelector(".attraction_intro");
@@ -344,6 +403,7 @@ function loadAttractions(attraction) {
 
     setupCarousel();
 }
+
 
 function setupCarousel() {
     const sliderEl = document.querySelector(".slider");
@@ -425,71 +485,57 @@ function setupCarousel() {
       
   }
 
-function setupLoginDialogue() {
-    const body = document.body;
+  function setupLoginDialogue() {
     const mask = document.querySelector(".mask");
     const login = document.querySelector(".login"); 
     const loginDialogue = document.querySelector(".login_dialogue");
-    const closeBtn = document.querySelector(".close img")
+    const closeBtn = document.querySelector(".close img");
     const switchToSignup = document.querySelector(".switch-to-signup");
     const switchToLogin = document.querySelector(".switch-to-login");
     const formLogin = document.querySelector(".form.login_elements");
     const formSignup = document.querySelector(".form.signup_elements");
     const logoutBtn = document.querySelector(".logout");
-    
-    if (!document.body.classList.contains("page-index") &&
-    !document.body.classList.contains("page-attraction")) return;
 
+    
     login.addEventListener("click", (e) => {
         e.preventDefault();
         mask.classList.add("active");
-        loginDialogue.classList.toggle("active");
-
-        const signinBtn = document.querySelector(".signin-btn");
-        if (signinBtn) {
-            signinBtn.addEventListener("click", (e) => {
-                e.preventDefault();
-                signin();
-            });
-        }
-
-        const signupBtn = document.querySelector(".signup-btn");
-        if (signupBtn) {
-            signupBtn.addEventListener("click", (e) => {
-                e.preventDefault();
-                signup();  
-            })
-        }
+        loginDialogue.classList.add("active");
     });
 
-    closeBtn.addEventListener("click", () => {
+    closeBtn.addEventListener("click", closeLoginDialog);
+    mask.addEventListener("click", closeLoginDialog);
+
+    function closeLoginDialog() {
         mask.classList.remove("active");
         loginDialogue.classList.remove("active");
-    });
-
-    mask.addEventListener("click", () => {
-        mask.classList.remove("active");
-        loginDialogue.classList.remove("active");
-    });
-
-
-    console.log("切換註冊表單點擊事件已綁定：", switchToSignup);
+    }
 
     switchToSignup.addEventListener("click", () => {
         formLogin.classList.remove("active");
         formSignup.classList.add("active");
     });
-    
+
     switchToLogin.addEventListener("click", () => {
         formSignup.classList.remove("active");
         formLogin.classList.add("active");
     });
 
-    document.querySelector(".logout")?.addEventListener("click", () => {
-        logout("manual");
+    document.querySelector(".signin-btn")?.addEventListener("click", (e) => {
+        e.preventDefault();
+        signin();
     });
 
+    document.querySelector(".signup-btn")?.addEventListener("click", (e) => {
+        e.preventDefault();
+        signup();
+    });
+
+    logoutBtn?.addEventListener("click", () => {
+        logout("manual");
+    });
 }
+
 
 async function signin() {
     const email = document.getElementById("login-email").value.trim();
@@ -529,10 +575,17 @@ async function signin() {
 
         const verifyData = await verifyRes.json();
         if (verifyRes.ok) {
-            console.log("登入成功 ✅ 使用者資料：", verifyData.data);
+            
+            const pendingBooking = JSON.parse(localStorage.getItem("pendingBooking"));
+            if (pendingBooking && window.location.pathname.startsWith("/attraction/")) {
+                localStorage.setItem("restoreBooking", JSON.stringify(pendingBooking));
+                localStorage.removeItem("pendingBooking");
+            }
+
             document.querySelector(".login_dialogue").classList.remove("active");
             document.querySelector(".mask").classList.remove("active");
-            window.location.reload()
+
+            window.location.reload(); 
         } else {
             console.error("登入驗證失敗：", verifyData);
             errorDiv.textContent = "登入驗證失敗，請稍後再試";
@@ -544,10 +597,9 @@ async function signin() {
     }
 }
 
-
 async function signup() {
     const name = document.getElementById("signup-name").value.trim();
-    const email = document.getElementById("signup-email").value.trim();  // <-- rename
+    const email = document.getElementById("signup-email").value.trim();  
     const password = document.getElementById("signup-password").value.trim();
 
     const errorDiv = document.getElementById("signup-error");
@@ -589,13 +641,11 @@ async function checkAuthStatus() {
 
     if (!loginBtn || !logoutBtn) return;
 
-    // 沒token的case
     if (!token) {
         loginBtn.style.display = "flex";
         logoutBtn.style.display = "none";
     }
 
-    // 有token call後端驗證的case
     try {
         const res = await fetch("/api/user/auth", {
             method: "GET",
@@ -632,3 +682,148 @@ function logout(reason = "manual") {
     window.location.reload();
 }
 
+async function fetchBooking() {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    const bookingContainer = document.querySelector(".booking_container");
+
+    try {
+        const res = await fetch("/api/booking", {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        const result = await res.json();
+
+        if (!res.ok || !result.data) {
+            bookingContainer.innerHTML = `<h3>目前沒有任何待預定的行程</h3>`;
+            document.querySelector("footer")?.classList.add("no-booking");
+            return;
+        }
+
+        const { attraction, date, time, price } = result.data;
+
+        const bookingDiv = document.createElement("div");
+        bookingDiv.className = "booking_container_attraction";
+        bookingDiv.innerHTML = `
+            <img src="${attraction.image}" alt="${attraction.name}">
+            <div class="info">
+                <h2>台北一日遊：${attraction.name}</h2>
+                <div class="date"><strong>日期：</strong><span class="normal">${date}</span></div>
+                <div class="time"><strong>時間：</strong><span class="normal">${time === "morning" ? "上半天" : "下半天"}</span></div>
+                <div class="price"><strong>費用：</strong><span class="normal">新台幣 ${price} 元</span></div>
+                <div class="address"><strong>地點：</strong><span class="normal">${attraction.address}</span></div>
+                <img class="delete" src="/static/img/icon/delete.png">
+                </div>
+            </div>
+        `;
+
+        bookingContainer.appendChild(bookingDiv);
+
+        bookingContainer.insertAdjacentHTML("beforeend", `
+            <div class="contract">
+                <div class="contract_form">
+                    <h2>您的預定資訊</h2>
+                    <div class="input-group">
+                        <label for="name">聯絡姓名：</label>
+                        <input type="text" id="contract-name" placeholder="">
+                    </div>
+                    <div class="input-group">
+                        <label for="email">聯絡信箱：</label>
+                        <input type="email" id="contract-email" placeholder="">
+                    </div>
+                    <div class="input-group">
+                        <label for="phone">手機號碼：</label>
+                        <input type="tel" id="contract-phone" placeholder="">
+                    </div>
+                    <p class="field-notice">請保持手機暢通，準時到達，導覽人員將用手機與您聯繫，務必留下正確的聯絡方式。</p>
+                </div>
+            </div>
+            <div class="payment">
+                <div class="payment_form">
+                    <h2>信用卡付款資訊</h2>
+                    <div class="input-group">
+                        <label for="card">卡片號碼：</label>
+                        <input type="text" id="card" placeholder="**** **** **** ****">
+                    </div>
+                    <div class="input-group">
+                        <label for="due">過期時間：</label>
+                        <input type="text" id="due" placeholder="MM/YY">
+                    </div>
+                    <div class="input-group">
+                        <label for="csc">驗證密碼：</label>
+                        <input type="text" id="csc" placeholder="CVV">
+                    </div>
+                </div>
+            </div>
+            <div class="total">
+                <h2>總價： <span id="total-price">${price}</span> 元</h2>
+            </div>
+            <div class="checkout_btn">
+                <button>確認訂購並付款</button>
+            </div>
+        `);
+
+    } catch (error) {
+        console.error("⚠️ Fetch Booking Error:", error);
+        document.querySelector("footer")?.classList.add("no-booking");
+    }
+}
+
+
+document.addEventListener("click", (e) => {
+    if (e.target.closest(".delete")) {
+      if (!confirm("確定要刪除行程嗎？")) return;
+  
+      const token = localStorage.getItem("token");
+      fetch("/api/booking", {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.ok) {
+          document.querySelector(".booking_container_attraction")?.remove();
+          window.location.reload(); 
+        } else {
+          alert(data.message || "刪除失敗，請稍後再試");
+        }
+      })
+      .catch(err => console.error("刪除行程失敗", err));
+    }
+  });
+  
+
+  async function handleBookingPage() {
+    const token = localStorage.getItem("token");
+    if (!token) {
+        showLoginDialog();
+        document.querySelector("footer")?.classList.add("no-booking");
+        return;
+    }
+
+    try {
+        const res = await fetch("/api/user/auth", {
+            method: "GET",
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        if (!res.ok || !data.data || !data.data.name) {
+            showLoginDialog();
+            document.querySelector("footer")?.classList.add("no-booking");
+            return;
+        }
+
+        const headlineEl = document.querySelector(".headline");
+        if (headlineEl) {
+            headlineEl.textContent = `您好，${data.data.name}，待預定的行程如下：`;
+        }
+
+        fetchBooking();
+
+    } catch (err) {
+        console.error("驗證失敗", err);
+        showLoginDialog();
+        document.querySelector("footer")?.classList.add("no-booking");
+    }
+}
