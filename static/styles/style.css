@@ -56,7 +56,7 @@ input[type="radio"] {
 
 .login_container {
     position: absolute;
-    z-index: 100;
+    z-index: 9997;
     border-radius: 0 5px 5px 0;
     display: flex;
     flex-direction: column;
@@ -76,10 +76,13 @@ input[type="radio"] {
     width: 100%;
 }
 
+.page-booking .login_container input {
+    width: calc(100% - 30px);
+}
+
 .login_container input:focus {
     outline: 2px solid #000000;  
 }
-
 
 .form_elements button {
     padding: 15px;
@@ -102,7 +105,6 @@ input[type="radio"] {
     margin-top: -10px;
 }
 
-
 .login_dialogue {
     left: 50%;
     top: 80px;
@@ -116,7 +118,7 @@ input[type="radio"] {
     display: flex;                    
     flex-direction: column;          
     align-items: center;             
-    justify-content: center;         
+    justify-content: center;    
     
     opacity: 0;                      
     pointer-events: none;           
@@ -136,7 +138,7 @@ input[type="radio"] {
     background: linear-gradient(to right, #66AABB, #337788);
     border-radius: 5px 5px 0 0;
     position: fixed;                  
-    z-index: 100;
+    z-index: 9999;  
 }
 
 .form_elements {
@@ -156,7 +158,7 @@ input[type="radio"] {
     top: 27px;
     width: 16px;
     height: 16px;
-    z-index: 150;
+    z-index: 9998;
     border-style: none;
     background-color: #fff;
     cursor: pointer;
@@ -165,6 +167,25 @@ input[type="radio"] {
 .close img {
     width: 100%;
     height: 100%;
+}
+
+.page-booking .close {
+    position: fixed; 
+    right: 17px;
+    padding: 0px;
+    top: 27px;
+    width: 16px !important;
+    height: 16px !important;
+    z-index: 150;
+    border-style: none;
+    background-color: #fff;
+    cursor: pointer;
+}
+
+.page-booking .close img {
+    width: 100% !important;
+    height: 100% !important;
+    
 }
 
 .form {
@@ -187,8 +208,6 @@ display: flex;
 .logout.active {
     display: block; 
 }
-
-
 
 .nav {
     display: flex;
@@ -259,8 +278,6 @@ display: flex;
     margin: 0;
 }
 
-
-
 h2 {
     margin: 0;
     font-size: 20px;
@@ -284,7 +301,6 @@ h2 {
     overflow: hidden;
 }
 
-
 .banner img {
     width: 100%; 
     max-width: 1920px; 
@@ -294,7 +310,6 @@ h2 {
     position: absolute; 
     z-index: 0; 
 }
-
 
 .banner .slogan {
     padding: 10px;
@@ -328,7 +343,6 @@ h2 {
     margin: 0px;
     padding-bottom: 10px;
 }
-
 
 .search {
     display: flex;
@@ -371,8 +385,6 @@ h2 {
     max-height: 30px;
 }
 
-
-
 .content {
     position: relative;
     display: flex;
@@ -380,7 +392,6 @@ h2 {
     flex-direction: column;
     max-width: 100%;
 }
-
 
 .listbar {
     display: flex;
@@ -391,7 +402,6 @@ h2 {
     box-sizing: border-box;
     width: 100%; 
 }
-
 
 .btn_container {
     width: 50px;
@@ -422,7 +432,6 @@ h2 {
     display: none;
 }
 
-
 .mrt-item {
     display: inline-flex;
     align-items: center;
@@ -433,7 +442,6 @@ h2 {
     white-space: nowrap;
     min-width: fit-content;
 }
-
 
 .listbar p {
     display: inline-flex;
@@ -470,8 +478,6 @@ h2 {
 .main-content {
     margin: 0 auto;
 }
-
-
 
 .big-box {
     max-width: 1180px;
@@ -566,18 +572,31 @@ h2 {
 }
 
 footer {
+    width: 100%;
     position: relative; 
     display: flex; 
     justify-content: center; 
-    align-items: center; 
+    align-items:center; 
     height: 104px; 
     overflow: hidden; 
     background-color: #757575;
 }
 
+
 footer p {
     margin: 0;
     color: #fff;
+}
+
+.page-booking footer.no-booking {
+    width: 100%;
+    height: 761px;
+    background-color: #757575;
+    align-items:flex-start;
+}
+
+footer.no-booking p {
+    margin-top: 40px;          
 }
 
 
@@ -751,7 +770,6 @@ footer p {
     display: none;
   }
   
-  
   .custom-radio .radio-mark {
     display: inline-block;
     width: 22px;
@@ -841,6 +859,223 @@ footer p {
     padding-top: 40px;
 }
 
+.page-booking content {
+    margin-top: 54px;
+    padding-top: 54px;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    max-width: 1000px;
+    position: relative;
+}
+
+.page-booking .booking_container {
+    border-bottom: 1px solid #e8e8e8;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    justify-content: center;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.page-booking .booking_container_attraction {  
+    display: flex;          
+    align-items: flex-start;    
+    width: 100%;
+    max-width: 980px;
+    margin-bottom: 40px;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.page-booking img {
+    flex: 0 0 250px;        
+    width: 250px;
+    height: 200px;
+    object-fit: cover; 
+}
+
+.page-booking .info {
+    position: relative;
+    padding-left: 30px;
+    font-size: 16px;
+    width: 100%;
+    max-width: 700px;
+    color: #666666;
+    gap: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+.booking_container_attraction .delete {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 30px;              
+    height: 30px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    padding: 0;
+  }
+  
+  .booking_container_attraction .delete img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+.page-booking .info h2 {
+    font-size: 16px;
+    color: #448899;
+    margin-bottom: 20px;
+}
+
+.page-booking .headline-container {
+    margin-top: 94px;
+    margin-bottom: 40px;
+    max-width: 1000px;
+    width: 100%;
+    height: 27px;
+}
+
+.page-booking .headline {
+    padding-left: 10px;
+    padding-right: 10px;
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+    gap: 15px;
+    font-size: 19px;
+    font-weight: bold;
+    color: #666666;
+}
+
+.page-booking .field-notice {
+    width: calc(100% - 20px);
+}
+
+.page-booking .contract {
+    width: 100%;
+    max-width: 1200px;
+    height: auto;
+    border-top: 1px solid #E8e8e8;
+    border-bottom: 1px solid #E8e8e8;
+    gap: 15px;
+    display: flex;
+    justify-content: center;
+}
+
+.page-booking .contract_container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.page-booking .contract_form {
+    max-width: 980px;
+    width: 100%;
+    margin-top: 40px;
+    margin-bottom: 40px;
+    padding-left: 10px;
+    padding-right: 10px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    gap: 15px;
+}
+
+.page-booking .contract h2, .page-booking .payment h2 {
+    color: #666666;
+}
+
+
+
+
+.page-booking .payment {
+    width: 100%;
+    max-width: 1200px;
+    height: auto;
+    border-bottom: 1px solid #E8e8e8;
+    display: flex;
+    justify-content: center;
+}
+
+.page-booking .payment_container {
+    max-width: 980px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.page-booking .payment_form {
+    max-width: 980px;
+    padding-left: 10px;
+    padding-right: 10px;
+    width: 100%;
+    margin-top: 40px;
+    margin-bottom: 40px;
+    display: flex;
+    flex-direction: column;
+    max-width: 980px;
+    height: auto;
+    gap: 15px;
+}
+
+.page-booking .input-group label {
+    color: #666;
+    font-size: 16px;
+}
+
+.page-booking .input-group input {
+    border-radius: 5px;
+    border-color: 1px solid #E8E8E8;
+    height: 18px;
+    box-shadow: none;
+    padding: 10px;
+    border: 1px solid #CCCCCC;   
+    outline: none;               
+    box-shadow: none;            
+    width: 200px;
+}
+
+.page-booking .total {
+    width: 100%;
+    max-width: 980px;
+    display: flex;
+    flex-direction: row-reverse;
+}
+
+.page-booking .total h2 {
+    color: #666666;
+    font-size: 16px;
+    padding-top: 25px;
+    padding-bottom: 25px;
+    margin-right: 10px;
+}
+
+.page-booking .checkout_btn {
+    width: 100%;
+    max-width: 980px;
+    display: flex;
+    flex-direction: row-reverse;
+    margin-right: 10px;
+}
+
+.page-booking .checkout_btn button {
+    background-color: #337788;
+    width: auto;
+    padding: 10px 20px;
+    border-radius: 5px;
+    color: #fff;
+    font-size: 19px;
+    border-style: none;
+    margin-top: 10px;
+    margin-bottom: 72px;
+    cursor: pointer;
+}
 
 @media screen and (min-width: 601px) and (max-width: 1200px) {
     .big-box {
@@ -918,9 +1153,8 @@ footer p {
       }
 
     .attraction_container_booking {
-        margin: 20px 15px;
-        width: calc(100% - 30px);
         max-width: 1200px;
+        box-sizing: border-box;
     }
 
       .attraction_board {
@@ -929,6 +1163,42 @@ footer p {
         width: 100%;
         max-width: 100%;
         box-sizing: border-box;
+
     }
 
+
+.booking_container_attraction {
+    
+    width: 100%;               
+    margin: 0;                 
+    padding: 0 10px;           
+    box-sizing: border-box;    
+  
+    
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+  }
+  
+  .booking_container_attraction img {
+    width: 100%;               
+    height: 200px;
+    object-fit: cover;
+  }
+  
+
+    .booking_container .info {
+        width: 100%;
+        height: 200px;
+        padding: 10px;
+        gap: 10px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .booking_container_attraction .delete {
+        top: auto;      
+        right: 10px;
+        bottom: 0;      
+      }
 }
