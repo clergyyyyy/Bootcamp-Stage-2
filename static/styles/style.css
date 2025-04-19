@@ -80,6 +80,10 @@ input[type="radio"] {
     width: calc(100% - 30px);
 }
 
+.page-thankyou .login_container input {
+    width: calc(100% - 30px);
+}
+
 .login_container input:focus {
     outline: 2px solid #000000;  
 }
@@ -595,6 +599,13 @@ footer p {
     align-items:flex-start;
 }
 
+.page-thankyou footer.no-booking {
+    width: 100%;
+    height: 761px;
+    background-color: #757575;
+    align-items:flex-start;
+}
+
 footer.no-booking p {
     margin-top: 40px;          
 }
@@ -780,7 +791,29 @@ footer.no-booking p {
     position: relative;
   }
   
-  
+  .page-thankyou .thankyou_container {
+    margin-top: 94px;
+    margin-bottom: 40px;
+    max-width: 1000px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.page-thankyou .headline-container {
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+}
+
+.page-thankyou .thankyou_container h2 {
+    color: #666666;
+    font-size: 20px;
+}
+
+
   .custom-radio input[type="radio"]:checked + .radio-mark::after {
     content: "";
     width: 18px;
@@ -932,13 +965,14 @@ footer.no-booking p {
     margin-bottom: 20px;
 }
 
-.page-booking .headline-container {
+.page-booking .headline-container  {
     margin-top: 94px;
     margin-bottom: 40px;
     max-width: 1000px;
     width: 100%;
     height: 27px;
 }
+
 
 .page-booking .headline {
     padding-left: 10px;

@@ -11,12 +11,17 @@ import os
 from pydantic import BaseModel
 import traceback
 from datetime import date as _date
+import requests
+from uuid import uuid4
 
 
 app = FastAPI()
+load_dotenv()
+TAPPAY_PARTNER_KEY = os.getenv("TAPPAY_PARTNER_KEY")
+TAPPAY_MERCHANT_ID = os.getenv("TAPPAY_MERCHANT_ID")
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
-load_dotenv()
+
 auth_scheme = HTTPBearer()
 
 
@@ -47,10 +52,21 @@ class BookingForm(BaseModel):
     date: str
     time: str
 
-class ContractForm(BaseModel):
+class Contact(BaseModel):
     name: str
     email: str
     phone: str
+
+class InnerOrder(BaseModel):
+    price: int
+    attractionId: int
+    date: str
+    time: str
+    contact: Contact
+
+class OrderForm(BaseModel):
+    prime: str
+    order: InnerOrder
 
 conn = mysql.connector.connect(
     host=DB_HOST,
@@ -106,17 +122,15 @@ def add_booking(price: int,
 
     with mysql.connector.connect(**DB_CONFIG) as conn:
         with conn.cursor() as cur:
-            # 1. 移除舊的「待預定」行程
-            cur.execute(delete_sql, (member_id,))
-            # 2. 新增新的行程
-            cur.execute(insert_sql, params)
+            cur.execute(delete_sql, (member_id,)) #刪舊的
+            cur.execute(insert_sql, params) #加新的
             conn.commit()
 
 def get_booking_list(member_id):
     query = """
     SELECT attraction_id, date, time, price
     FROM orders
-    WHERE member_id = %s
+    WHERE member_id = %s AND number IS NULL
     """
 
     with mysql.connector.connect(**DB_CONFIG) as conn:
@@ -134,16 +148,39 @@ def delete_booking(member_id):
             cursor.execute(query, (member_id,))
             conn.commit()
 
-def complete_order(name, email, phone, member_id):
-    query = """
-    UPDATE orders
-    SET name = %s, email = %s, phone = %s
-    WHERE member_id = %s
-    """
+def complete_order(number, name, email, phone, member_id, status):
+    print("[DEBUG] 執行 UPDATE SQL：", number, name, email, phone, member_id, status)
     with mysql.connector.connect(**DB_CONFIG) as conn:
         with conn.cursor() as cursor:
-            cursor.execute(query, (name, email, phone, member_id))
+            cursor.execute("""
+            SELECT id FROM orders
+            WHERE member_id = %s AND number IS NULL
+            ORDER BY order_time DESC
+            LIMIT 1 """, (member_id,))
+            row = cursor.fetchone()
+            if not row:
+                print("[DEBUG]沒找到可更新的訂單")
+                return
+            
+            order_id = row[0]
+            print(order_id)
+
+            cursor.execute("""
+            UPDATE orders
+            SET number = %s, name = %s, email = %s, phone = %s, status = %s
+            WHERE id = %s
+            """, (number, name, email, phone, status, order_id))
             conn.commit()
+            print("[Debug]訂單已更新id=", order_id)
+
+def get_order_by_number(order_number):
+    query = """
+    SELECT * FROM orders WHERE number = %s
+    """
+    with mysql.connector.connect(**DB_CONFIG) as conn:
+        with conn.cursor(dictionary=True) as cursor:
+            cursor.execute(query, (order_number,))
+            return cursor.fetchone()
 
 def get_attractions_list(page: int = 0, keyword: str = None):
     limit = 12
@@ -465,7 +502,88 @@ def booking_delete(credentials: HTTPAuthorizationCredentials = Depends(auth_sche
         })
     
 @app.post("/api/orders")
-def complete_booking_api(form: ContractForm, credentials: HTTPAuthorizationCredentials = Depends(auth_scheme)):
+async def create_order(
+    form: OrderForm,
+    cred: HTTPAuthorizationCredentials = Depends(auth_scheme)
+):
+    payload = decode_access_token(cred.credentials)
+    if not payload:
+        raise HTTPException(403, "未登入")
+
+    member_id = payload["user_id"]
+
+    attraction = get_single_attraction(form.order.attractionId)
+    if not attraction:
+        return JSONResponse({"error": True, "message": "景點不存在"}, 400)
+
+    tappay_payload = {
+        "prime":       form.prime,
+        "partner_key": TAPPAY_PARTNER_KEY,
+        "merchant_id": TAPPAY_MERCHANT_ID,
+        "amount":      form.order.price,
+        "details":     f"台北一日遊 - {attraction['name']}"[:100],
+        "cardholder": {
+            "phone_number": form.order.contact.phone,
+            "name":         form.order.contact.name,
+            "email":        form.order.contact.email
+        },
+        "remember": False
+    }
+
+    headers = {
+        "Content-Type": "application/json",
+        "x-api-key": TAPPAY_PARTNER_KEY
+    }
+
+    print("TapPay payload:", tappay_payload)
+    print("Env partner_key:", repr(TAPPAY_PARTNER_KEY))
+    print("Env merchant_id:", repr(TAPPAY_MERCHANT_ID))
+
+    r = requests.post(
+        "https://sandbox.tappaysdk.com/tpc/payment/pay-by-prime",
+        headers=headers,
+        json=tappay_payload,
+        timeout=15
+    )
+    result = r.json()
+
+    if result.get("status") != 0:
+        return JSONResponse({
+            "error": True,
+            "message": f"TapPay 錯誤：{result.get('msg','unknown')}"
+        }, 400)
+
+    order_no = str(uuid4())[:8]
+
+    print(order_no)
+
+    print("[DEBUG]傳入complete_order：", {
+    "number": order_no,
+    "name": form.order.contact.name,
+    "email": form.order.contact.email,
+    "phone": form.order.contact.phone,
+    "member_id": member_id,
+    "status": 1
+})
+
+    complete_order(
+        number = order_no,
+        name  = form.order.contact.name,
+        email = form.order.contact.email,
+        phone = form.order.contact.phone,
+        member_id = member_id,
+        status = 1
+    )
+
+    return {
+        "data": {
+            "number":  order_no,
+            "payment": {"status": 0, "message": "付款成功"}
+        }
+    }
+
+@app.get("/api/order/{orderNumber}")
+def order_get(orderNumber: str, credentials: HTTPAuthorizationCredentials = Depends(auth_scheme)):
     payload = decode_access_token(credentials.credentials)
     if not payload:
         return JSONResponse(status_code=403, content={
@@ -473,21 +591,34 @@ def complete_booking_api(form: ContractForm, credentials: HTTPAuthorizationCrede
             "message": "未登入系統，拒絕存取"
         })
 
-    member_id = payload["user_id"]
-    booking_data = get_booking_list(member_id)
+    order = get_order_by_number(orderNumber)
+    if not order:
+        return JSONResponse(content={"data": None}, status_code=200)
 
-    if not booking_data:
-        return JSONResponse(status_code=500, content={
-            "error": True,
-            "message": "查無預定資料"
-        })
+    attraction = get_single_attraction(order["attraction_id"])
+    if not attraction:
+        return JSONResponse(status_code=500, content={"error": True, "message": "查無景點資料"})
 
-    try:
-        complete_order(form.name, form.email, form.phone, member_id)
-        return {"ok": True}
-    except Exception as e:
-        print("[ERROR]", e)
-        return JSONResponse(status_code=500, content={
-            "error": True,
-            "message": "伺服器內部錯誤"
-        })
+    result = {
+        "data": {
+            "number": order["number"],
+            "price": order["price"],
+            "trip": {
+                "attraction": {
+                    "id": attraction["id"],
+                    "name": attraction["name"],
+                    "address": attraction["address"],
+                    "image": attraction["images"][0] if attraction["images"] else None
+                },
+                "date": order["date"].isoformat(),
+                "time": order["time"]
+            },
+            "contact": {
+                "name": order["name"],
+                "email": order["email"],
+                "phone": order["phone"]
+            },
+            "status": order["status"]
+        }
+    }
+    return JSONResponse(result, status_code=200)
