@@ -877,6 +877,7 @@ function onPayClick (e) {
   });
 }
 
+
     } catch (error) {
         console.error("⚠️ Fetch Booking Error:", error);
         document.querySelector("footer")?.classList.add("no-booking");
@@ -905,45 +906,50 @@ document.addEventListener("click", (e) => {
     }
   });
 
-  async function fetchThankyou(userData) {
+  async function fetchThankyou() {
     const token = localStorage.getItem("token");
     if (!token) return;
-
+  
     const orderContainer = document.querySelector(".thankyou_container");
-    const urlParams = new URLSearchParams(window.location.search);
-    const orderNumber = urlParams.get("number");
-
+    const urlParams      = new URLSearchParams(window.location.search);
+    const orderNumber    = urlParams.get("number");
+  
     if (!orderNumber) {
-        orderContainer.innerHTML = `<h3>查無訂單編號</h3>`;
+      orderContainer.innerHTML = `<h3>查無訂單編號</h3>`;
+      document.querySelector("footer")?.classList.add("no-booking");
+      return;
+    }
+  
+    try {
+      const orderRes  = await fetch(`/api/order/${orderNumber}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const orderData = await orderRes.json();
+  
+      if (!orderRes.ok || !orderData.data) {
+        orderContainer.innerHTML = `<h3>目前沒有任何已預定的行程</h3>`;
         document.querySelector("footer")?.classList.add("no-booking");
         return;
-    }
-
-    try {
-        const orderRes = await fetch(`/api/order/${orderNumber}`, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
-        const orderData = await orderRes.json();
-
-        const orderDiv = document.createElement("div");
-        orderDiv.className = "headline-container";
-        orderDiv.innerHTML = `
-                <h2>行程預定成功</h2>
-                <h2>您的訂單編號如下</h2>
-                <h2></h2>
-                <p>${orderNumber}</p>
-                <p>請記住此編號，或到會員中心查看</p>
-        `;
-        orderContainer.appendChild(orderDiv);
-        document.querySelector("footer")?.classList.add("no-booking");
+      }
+  
+      const orderDiv = document.createElement("div");
+      orderDiv.className = "headline-container";
+      orderDiv.innerHTML = `
+        <h2>行程預定成功</h2>
+        <h2>您的訂單編號如下</h2>
+        <p>${orderNumber}</p>
+        <p>請記住此編號，或到會員中心查看</p>
+      `;
+      orderContainer.appendChild(orderDiv);
+      document.querySelector("footer")?.classList.add("no-booking");
+  
     } catch (err) {
-        console.error("加載失敗", err);
-        alert("登入失敗或伺服器錯誤，請重新整理頁面");
+      console.error("加載失敗", err);
+      alert("伺服器錯誤，請重新整理頁面");
     }
-}
+  }
 
-
-async function handleThankyouPage() {
+async function handleBookingPage() {
     const token = localStorage.getItem("token");
     if (!token) {
         showLoginDialog();
@@ -966,10 +972,10 @@ async function handleThankyouPage() {
 
         const headlineEl = document.querySelector(".headline");
         if (headlineEl) {
-            headlineEl.textContent = `您好，${data.data.name}`;
+            headlineEl.textContent = `您好，${data.data.name}，待預定的行程如下：`;
         }
 
-        fetchThankyou(data.data);
+        fetchBooking();
 
     } catch (err) {
         console.error("驗證失敗", err);
