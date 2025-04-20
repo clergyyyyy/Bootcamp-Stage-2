@@ -736,12 +736,21 @@ async function fetchBooking() {
 
         const style = document.createElement("style");
         style.textContent = `
+        .page-booking .input-group {
+        display: flex;
+        align-items: center;
+        }
+        .page-booking .input-group label {
+        width: 81px;
+        }
         .tpfield {
-            height: 40px;
-            width: 300px;
-            border: 1px solid gray;
-            margin: 5px 0;
-            padding: 5px;
+        border-radius: 5px;
+        border: 1px solid #CCCCCC;
+        height: 18px;
+        padding: 10px;
+        width: 200px;
+        box-shadow: none;
+        outline: none;
         }
         `;
         document.head.appendChild(style);
@@ -790,14 +799,31 @@ function initTapPay () {
       ccv:            { element: ccvEl,    placeholder: 'CVV' }
     },
     styles: {
-      'input':   { color: 'gray', 'font-size': '16px' },
-      ':focus':  { color: '#448899' },
-      '.valid':  { color: 'green' },
-      '.invalid':{ color: 'red'   }
+      'input': {
+        color: '#666',
+        'font-size': '16px',
+        'border-radius': '5px',
+        'border': '1px solid #CCCCCC',
+        'height': '38px',
+        'padding': '10px',
+        'box-shadow': 'none',
+        'outline': 'none',
+        'width': '200px'
+      },
+      ':focus':  {
+        color: '#448899'
+      },
+      '.valid': {
+        color: 'green'
+      },
+      '.invalid': {
+        color: 'red'
+      }
     },
     isMaskCreditCardNumber: true,
     maskCreditCardNumberRange: { beginIndex: 6, endIndex: 11 }
   });
+  
 
   TPDirect.card.onUpdate(update => {
     update.canGetPrime ? payBtn.removeAttribute('disabled')
@@ -851,13 +877,11 @@ function onPayClick (e) {
   });
 }
 
-
     } catch (error) {
         console.error("⚠️ Fetch Booking Error:", error);
         document.querySelector("footer")?.classList.add("no-booking");
     }
 }
-
 
 document.addEventListener("click", (e) => {
     if (e.target.closest(".delete")) {
@@ -881,33 +905,21 @@ document.addEventListener("click", (e) => {
     }
   });
 
-  async function fetchThankyou() {
+  async function fetchThankyou(userData) {
     const token = localStorage.getItem("token");
     if (!token) return;
 
     const orderContainer = document.querySelector(".thankyou_container");
+    const urlParams = new URLSearchParams(window.location.search);
+    const orderNumber = urlParams.get("number");
+
+    if (!orderNumber) {
+        orderContainer.innerHTML = `<h3>查無訂單編號</h3>`;
+        document.querySelector("footer")?.classList.add("no-booking");
+        return;
+    }
 
     try {
-        const res = await fetch("/api/user/auth", {
-            headers: { Authorization: `Bearer ${token}` }
-        });
-        const result = await res.json();
-
-        if (!res.ok || !result.data) {
-            orderContainer.innerHTML = `<h3>目前沒有任何已預定的行程</h3>`;
-            document.querySelector("footer")?.classList.add("no-booking");
-            return;
-        }
-
-        const urlParams = new URLSearchParams(window.location.search);
-        const orderNumber = urlParams.get("number");
-
-        if (!orderNumber) {
-            orderContainer.innerHTML = `<h3>查無訂單編號</h3>`;
-            document.querySelector("footer")?.classList.add("no-booking");
-            return;
-        }
-
         const orderRes = await fetch(`/api/order/${orderNumber}`, {
             headers: { Authorization: `Bearer ${token}` }
         });
@@ -931,7 +943,7 @@ document.addEventListener("click", (e) => {
 }
 
 
-async function handleBookingPage() {
+async function handleThankyouPage() {
     const token = localStorage.getItem("token");
     if (!token) {
         showLoginDialog();
@@ -954,10 +966,10 @@ async function handleBookingPage() {
 
         const headlineEl = document.querySelector(".headline");
         if (headlineEl) {
-            headlineEl.textContent = `您好，${data.data.name}，待預定的行程如下：`;
+            headlineEl.textContent = `您好，${data.data.name}`;
         }
 
-        fetchBooking();
+        fetchThankyou(data.data);
 
     } catch (err) {
         console.error("驗證失敗", err);
