@@ -13,6 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const isAttractionPage = window.location.pathname.startsWith("/attraction");
     const isBookingPage = window.location.pathname.startsWith("/booking");
+    const isThankyouPage = window.location.pathname.startsWith("/thankyou")
 
     if (isAttractionPage) {
         fetchAttractionID();
@@ -27,7 +28,19 @@ document.addEventListener("DOMContentLoaded", () => {
         } else {
             handleBookingPage();  
         }
-    } else {
+    } else if (isThankyouPage) {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            
+            document.querySelector("footer")?.classList.add("no-booking");
+            setTimeout(() => {
+                document.querySelector(".login")?.click();
+            }, 0);
+        } else {
+            handleThankyouPage();  
+        }
+    }
+    else {
         fetchAttractions();
     }
 });
@@ -700,6 +713,7 @@ async function fetchBooking() {
             return;
         }
 
+
         const { attraction, date, time, price } = result.data;
 
         const bookingDiv = document.createElement("div");
@@ -719,56 +733,156 @@ async function fetchBooking() {
 
         bookingContainer.appendChild(bookingDiv);
 
-        bookingContainer.insertAdjacentHTML("beforeend", `
-            <div class="contract">
-                <div class="contract_form">
-                    <h2>您的預定資訊</h2>
-                    <div class="input-group">
-                        <label for="name">聯絡姓名：</label>
-                        <input type="text" id="contract-name" placeholder="">
-                    </div>
-                    <div class="input-group">
-                        <label for="email">聯絡信箱：</label>
-                        <input type="email" id="contract-email" placeholder="">
-                    </div>
-                    <div class="input-group">
-                        <label for="phone">手機號碼：</label>
-                        <input type="tel" id="contract-phone" placeholder="">
-                    </div>
-                    <p class="field-notice">請保持手機暢通，準時到達，導覽人員將用手機與您聯繫，務必留下正確的聯絡方式。</p>
-                </div>
-            </div>
-            <div class="payment">
-                <div class="payment_form">
-                    <h2>信用卡付款資訊</h2>
-                    <div class="input-group">
-                        <label for="card">卡片號碼：</label>
-                        <input type="text" id="card" placeholder="**** **** **** ****">
-                    </div>
-                    <div class="input-group">
-                        <label for="due">過期時間：</label>
-                        <input type="text" id="due" placeholder="MM/YY">
-                    </div>
-                    <div class="input-group">
-                        <label for="csc">驗證密碼：</label>
-                        <input type="text" id="csc" placeholder="CVV">
-                    </div>
-                </div>
-            </div>
-            <div class="total">
-                <h2>總價： <span id="total-price">${price}</span> 元</h2>
-            </div>
-            <div class="checkout_btn">
-                <button>確認訂購並付款</button>
-            </div>
-        `);
+
+        const style = document.createElement("style");
+        style.textContent = `
+        .page-booking .input-group {
+        display: flex;
+        align-items: center;
+        }
+        .page-booking .input-group label {
+        width: 81px;
+        }
+        .tpfield {
+        border-radius: 5px;
+        border: 1px solid #CCCCCC;
+        height: 18px;
+        padding: 10px;
+        width: 200px;
+        box-shadow: none;
+        outline: none;
+        }
+        `;
+        document.head.appendChild(style);
+
+const payHtml =  `
+  <div class="contract">
+    <div class="contract_form">
+      <h2>您的預定資訊</h2>
+      <div class="input-group"><label>聯絡姓名：</label><input id="contract-name" type="text"></div>
+      <div class="input-group"><label>聯絡信箱：</label><input id="contract-email" type="email"></div>
+      <div class="input-group"><label>手機號碼：</label><input id="contract-phone" type="tel"></div>
+      <p class="field-notice">請保持手機暢通，準時到達，導覽人員將用手機與您聯繫，務必留下正確的聯絡方式。</p>
+    </div>
+  </div>
+
+  <div class="payment">
+    <div class="payment_form">
+      <h2>信用卡付款資訊</h2>
+      <div class="input-group"><label>卡片號碼：</label><div id="card-number" class="tpfield"></div></div>
+      <div class="input-group"><label>過期時間：</label><div id="card-expiration-date" class="tpfield"></div></div>
+      <div class="input-group"><label>驗證密碼：</label><div id="card-ccv" class="tpfield"></div></div>
+    </div>
+  </div>
+
+  <div class="total"><h2>總價：<span id="total-price">${price}</span> 元</h2></div>
+  <div class="checkout_btn"><button id="tappay-submit" disabled>確認訂購並付款</button></div>
+`;
+
+bookingContainer.insertAdjacentHTML('beforeend', payHtml);
+
+requestAnimationFrame(initTapPay);
+
+function initTapPay () {
+  if (!window.TPDirect) { console.error('TapPay SDK 尚未載入'); return; }
+
+  const numberEl = document.getElementById('card-number');
+  const expEl    = document.getElementById('card-expiration-date');
+  const ccvEl    = document.getElementById('card-ccv');
+  const payBtn   = document.getElementById('tappay-submit');
+  if (!numberEl || !expEl || !ccvEl || !payBtn) return;
+
+  TPDirect.card.setup({
+    fields: {
+      number:         { element: numberEl, placeholder: '**** **** **** ****' },
+      expirationDate: { element: expEl,    placeholder: 'MM / YY' },
+      ccv:            { element: ccvEl,    placeholder: 'CVV' }
+    },
+    styles: {
+      'input': {
+        color: '#666',
+        'font-size': '16px',
+        'border-radius': '5px',
+        'border': '1px solid #CCCCCC',
+        'height': '38px',
+        'padding': '10px',
+        'box-shadow': 'none',
+        'outline': 'none',
+        'width': '200px'
+      },
+      ':focus':  {
+        color: '#448899'
+      },
+      '.valid': {
+        color: 'green'
+      },
+      '.invalid': {
+        color: 'red'
+      }
+    },
+    isMaskCreditCardNumber: true,
+    maskCreditCardNumberRange: { beginIndex: 6, endIndex: 11 }
+  });
+  
+
+  TPDirect.card.onUpdate(update => {
+    update.canGetPrime ? payBtn.removeAttribute('disabled')
+                       : payBtn.setAttribute('disabled', true);
+  });
+  
+  payBtn.addEventListener('click', onPayClick);
+}
+
+function onPayClick (e) {
+  e.preventDefault();
+
+  const status = TPDirect.card.getTappayFieldsStatus();
+  if (!status.canGetPrime) { alert('信用卡資訊不完整'); return; }
+
+  TPDirect.card.getPrime(result => {
+    if (result.status !== 0) { alert('取得 Prime 失敗：' + result.msg); return; }
+
+    const prime   = result.card.prime;
+    const contact = {
+      name : document.getElementById('contract-name').value.trim(),
+      email: document.getElementById('contract-email').value.trim(),
+      phone: document.getElementById('contract-phone').value.trim()
+    };
+
+    if (!contact.name || !contact.email || !contact.phone) {
+        alert('請填寫您的聯絡資訊');
+        return;
+    }
+
+    fetch('/api/orders', {
+      method : 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization : `Bearer ${localStorage.getItem('token')}`
+      },
+      body: JSON.stringify({
+        prime,
+        order: { price, attractionId: attraction.id, date, time, contact }
+      })
+    })
+    .then(r => r.json())
+    .then(res => {
+      if (res?.data?.number) {
+        location.href = `/thankyou?number=${res.data.number}`;
+      } else {
+        alert('付款失敗：' + (res.message || '未知錯誤'));
+      }
+    })
+    .catch(err => console.error('送 /api/orders 失敗', err));
+  });
+}
+
 
     } catch (error) {
         console.error("⚠️ Fetch Booking Error:", error);
         document.querySelector("footer")?.classList.add("no-booking");
     }
 }
-
 
 document.addEventListener("click", (e) => {
     if (e.target.closest(".delete")) {
@@ -791,9 +905,51 @@ document.addEventListener("click", (e) => {
       .catch(err => console.error("刪除行程失敗", err));
     }
   });
-  
 
-  async function handleBookingPage() {
+  async function fetchThankyou() {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+  
+    const orderContainer = document.querySelector(".thankyou_container");
+    const urlParams      = new URLSearchParams(window.location.search);
+    const orderNumber    = urlParams.get("number");
+  
+    if (!orderNumber) {
+      orderContainer.innerHTML = `<h3>查無訂單編號</h3>`;
+      document.querySelector("footer")?.classList.add("no-booking");
+      return;
+    }
+  
+    try {
+      const orderRes  = await fetch(`/api/order/${orderNumber}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const orderData = await orderRes.json();
+  
+      if (!orderRes.ok || !orderData.data) {
+        orderContainer.innerHTML = `<h3>目前沒有任何已預定的行程</h3>`;
+        document.querySelector("footer")?.classList.add("no-booking");
+        return;
+      }
+  
+      const orderDiv = document.createElement("div");
+      orderDiv.className = "headline-container";
+      orderDiv.innerHTML = `
+        <h2>行程預定成功</h2>
+        <h2>您的訂單編號如下</h2>
+        <p>${orderNumber}</p>
+        <p>請記住此編號，或到會員中心查看</p>
+      `;
+      orderContainer.appendChild(orderDiv);
+      document.querySelector("footer")?.classList.add("no-booking");
+  
+    } catch (err) {
+      console.error("加載失敗", err);
+      alert("伺服器錯誤，請重新整理頁面");
+    }
+  }
+
+async function handleBookingPage() {
     const token = localStorage.getItem("token");
     if (!token) {
         showLoginDialog();
@@ -827,3 +983,41 @@ document.addEventListener("click", (e) => {
         document.querySelector("footer")?.classList.add("no-booking");
     }
 }
+
+
+async function handleThankyouPage() {
+    const token = localStorage.getItem("token");
+    if (!token) {
+        showLoginDialog();
+        document.querySelector("footer")?.classList.add("no-booking");
+        return;
+    }
+
+    try {
+        const res = await fetch("/api/user/auth", {
+            method: "GET",
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        if (!res.ok || !data.data || !data.data.name) {
+            showLoginDialog();
+            document.querySelector("footer")?.classList.add("no-booking");
+            return;
+        }
+
+        const headlineEl = document.querySelector(".headline");
+        if (headlineEl) {
+            headlineEl.textContent = ``;
+        }
+
+        fetchThankyou();
+
+    } catch (err) {
+        console.error("驗證失敗", err);
+        showLoginDialog();
+        document.querySelector("footer")?.classList.add("no-booking");
+    }
+}
+
+
