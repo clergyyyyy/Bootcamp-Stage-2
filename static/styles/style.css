@@ -103,6 +103,11 @@ input[type="radio"] {
     justify-content: center;
     border-style: none;
     cursor: pointer;
+    transition: all .1s linear;
+}
+
+.form_elements button:hover{
+    background-color: #225662;
 }
 
 .switch-to-signup,
@@ -389,6 +394,11 @@ h2 {
     align-items: center;
     padding: 0;
     cursor: pointer;
+    transition: all .2s linear;
+}
+
+.search button:hover {
+    background-color: #225662;
 }
 
 .search button img {
@@ -456,6 +466,10 @@ h2 {
     min-width: fit-content;
 }
 
+.mrt-item p:hover{
+    color: #3c3c3c;
+}
+
 .listbar p {
     display: inline-flex;
     margin: 0;
@@ -512,6 +526,11 @@ h2 {
     color: inherit;           
     cursor: pointer;
     box-sizing: border-box;
+  }
+
+  .card-frame:hover {
+    border: 2px solid #3c3c3c;
+    transition: all .2s linear;
   }
 
   .heart-btn {
@@ -799,6 +818,11 @@ footer.no-booking p {
     margin-bottom: 15px;
     border-style: none;
     cursor: pointer;
+    transition: all .2s linear;
+}
+
+.attraction_board button:hover {
+    background-color: #225662;
 }
 
 .attraction_board input {
@@ -1211,6 +1235,11 @@ footer.no-booking p {
     margin-top: 10px;
     margin-bottom: 72px;
     cursor: pointer;
+    transition: all .2s linear;
+}
+
+.page-booking .checkout_btn button:hover {
+    background-color: #225662;
 }
 
 .page-member .function h2 {
