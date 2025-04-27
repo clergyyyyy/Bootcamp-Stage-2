@@ -84,6 +84,10 @@ input[type="radio"] {
     width: calc(100% - 30px);
 }
 
+.page-member .login_container input {
+    width: calc(100% - 30px);
+}
+
 .login_container input:focus {
     outline: 2px solid #000000;  
 }
@@ -260,6 +264,11 @@ display: flex;
     color: #666;
     font-size: 16px;
     padding: 0 10px 0 10px;
+    transition: all .2s linear;
+}
+
+.item:hover {
+    color: #3C3C3C;
 }
 
 .error {
@@ -505,6 +514,27 @@ h2 {
     box-sizing: border-box;
   }
 
+  .heart-btn {
+    position: absolute;
+    z-index: 8;
+    top: 10px;
+    right: 10px;
+    width: 25px;
+    height: 25px;
+    background: url('/static/img/icon/heart-default.svg') no-repeat center;
+    background-size: contain;
+    border: none;
+    cursor: pointer;
+  }
+  
+  .heart-btn:hover {
+    background-image: url('/static/img/icon/heart-hover.svg');
+  }
+  
+  .heart-btn.active {
+    background-image: url('/static/img/icon/heart-selected.svg');
+  }
+
 .card {
     display: flex;
     flex-wrap: wrap;
@@ -638,6 +668,7 @@ footer.no-booking p {
     height: 400px;
     overflow: hidden; 
     border-radius: 5px;
+    z-index: auto;
   }
   
   .slider {
@@ -661,14 +692,14 @@ footer.no-booking p {
     position: absolute;
     bottom: 10px;
     width: 100%;
-    z-index: 10;
+    z-index: 3;
   }
   
   .carousel-dots {
     display: flex;
     gap: 6px;
     position: relative;     
-    z-index: 20;
+    z-index: 4;
     padding: 0;
   }
 
@@ -698,12 +729,12 @@ footer.no-booking p {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    z-index: 10;
+    z-index: 3;
     pointer-events: auto;
 }
 
 .attraction_carousel .btn_container {
-    z-index: 1;
+    z-index: 3;
     height: 400px;
     align-items: center;
     cursor: pointer;
@@ -801,6 +832,53 @@ footer.no-booking p {
     align-items: flex-start;
 }
 
+.page-member .headline {
+    margin-top: 94px;
+    max-width: 240px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.page-member .headline-container {
+    width: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.page-member .member-container {
+    display: flex;
+    max-width: 1200px;
+    width: 100%;
+    height: auto;
+    align-items: flex-start;
+}
+
+.page-member .function-container {
+    width: 250px;
+    flex-shrink: 0;
+    margin: 5px;
+}
+
+.page-member .member-container-content {
+    max-width: 927px;
+}
+
+.page-member .profile {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.page-member .member-container img {
+    width: 50px;
+    height: 47px;
+    margin: 10px;
+}
+
 .page-thankyou .headline-container {
     display: flex;
     width: 100%;
@@ -808,11 +886,10 @@ footer.no-booking p {
     align-items: center;
 }
 
-.page-thankyou .thankyou_container h2 {
+.page-thankyou .thankyou_container h2, .page-member .headline-container h2 {
     color: #666666;
     font-size: 20px;
 }
-
 
   .custom-radio input[type="radio"]:checked + .radio-mark::after {
     content: "";
@@ -864,6 +941,7 @@ footer.no-booking p {
     font-size: 16px;
   }
 
+
 .attraction_board input[type="date"] {
     border: none;
     outline: none;
@@ -912,7 +990,7 @@ footer.no-booking p {
     box-sizing: border-box;
 }
 
-.page-booking .booking_container_attraction {  
+.page-booking .booking_container_attraction, .page-member .booking_container_attraction {  
     display: flex;          
     align-items: flex-start;    
     width: 100%;
@@ -922,14 +1000,27 @@ footer.no-booking p {
     box-sizing: border-box;
 }
 
-.page-booking img {
+.page-member .booking_container_attraction {
+    padding: 40px 10px;
+}
+
+.page-member .booking_container_attraction {
+    margin-bottom: 0px;
+    border-bottom: 1px solid #E8e8e8;
+}
+
+.page-booking img, .page-member .booking_container_attraction img {
     flex: 0 0 250px;        
     width: 250px;
     height: 200px;
     object-fit: cover; 
 }
 
-.page-booking .info {
+.page-member .booking_container_attraction img {
+    margin: 0px;
+}
+
+.page-booking .info, .page-member .info {
     position: relative;
     padding-left: 30px;
     font-size: 16px;
@@ -939,6 +1030,17 @@ footer.no-booking p {
     gap: 10px;
     display: flex;
     flex-direction: column;
+}
+
+.page-member .info .button {
+    color: #666666;
+    text-decoration: underline;
+    cursor: pointer;
+    transition: all .2s linear;
+}
+
+.page-member .info .button:hover {
+    color: #3c3c3c;
 }
 
 .booking_container_attraction .delete {
@@ -959,7 +1061,7 @@ footer.no-booking p {
     object-fit: contain;
   }
 
-.page-booking .info h2 {
+.page-booking .info h2, .page-member .info h2 {
     font-size: 16px;
     color: #448899;
     margin-bottom: 20px;
@@ -1111,6 +1213,28 @@ footer.no-booking p {
     cursor: pointer;
 }
 
+.page-member .function h2 {
+    color: #666666;
+    font-size: 20px;
+    font-style: bold;
+}
+
+.page-member .function-container .function {
+    width: 100%;
+    height: 92px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #E8E8E8;
+    border-radius: 5px;
+    cursor: pointer;
+    gap: 10px;
+}
+
+.page-member .booking_container_attraction {
+    max-width: 927px;
+}
+
 @media screen and (min-width: 601px) and (max-width: 1200px) {
     .big-box {
         max-width: 100%; 
@@ -1154,6 +1278,50 @@ footer.no-booking p {
         box-sizing: border-box;
     }
 
+    .page-member .function-container {
+        width: 100%;
+
+    }
+
+    .page-member .two-functions {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+    }
+
+    .page-member .function {
+        width: 100% !important;
+    }
+
+    .member-container {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .page-member .booking_container_attraction {
+        max-width: none !important;
+        width: 100%;
+    }
+
+    .page-member .booking_container_attraction img{
+        width: 100%;
+        max-height: 350px;           
+        object-fit: cover;
+    }
+
+    .page-member .info {
+        max-width: none !important;
+        width: calc(100% - 20px);
+        margin: 10px !important;
+        padding-left: 0px !important;
+        margin-bottom: 40px;
+    }
+
+    .page-member .member-container-content {
+        width: 100%;
+    }
+  
+
 }
 
 
@@ -1189,42 +1357,43 @@ footer.no-booking p {
     .attraction_container_booking {
         max-width: 1200px;
         box-sizing: border-box;
+        margin   :20px 0;      
+        padding  :0 10px;      
     }
 
       .attraction_board {
         background-color: #E8E8E8;
         border-radius: 5px;
         width: 100%;
-        max-width: 100%;
-        box-sizing: border-box;
 
+        box-sizing: border-box;
     }
 
 
-.booking_container_attraction {
+    .page-member .booking_container_attraction {
+        max-width: none !important;
+        width: 100% !important;               
+        margin: 0;                 
+        padding: 0px;           
+        box-sizing: border-box;    
+      
+        
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+      }
     
-    width: 100%;               
-    margin: 0;                 
-    padding: 0 10px;           
-    box-sizing: border-box;    
-  
-    
-    display: flex;
-    flex-direction: column;
-    gap: 30px;
-  }
-  
-  .booking_container_attraction img {
-    width: 100%;               
-    height: 200px;
-    object-fit: cover;
-  }
+    .page-member .booking_container_attraction img {
+        width: 100%;
+        height: 350px;
+        object-position: center;
+    }
   
 
     .booking_container .info {
-        width: 100%;
-        height: 200px;
+        height: auto;
         padding: 10px;
+        margin: 10px;
         gap: 10px;
         display: flex;
         flex-direction: column;
@@ -1235,4 +1404,38 @@ footer.no-booking p {
         right: 10px;
         bottom: 0;      
       }
+    
+    .page-member .booking_container_attraction img {
+        width: 100%;
+        height: 350px;
+        object-position: center;
+    }
+
+    .page-member .function-container {
+        width: 100%;
+        margin: 20px 10px;
+
+    }
+
+    .page-member .two-functions {
+        display: flex;
+        flex-direction: row;
+    }
+
+
+    .page-member .info {
+        max-width: none;
+        width: calc(100% - 20px);
+        margin: 10px !important;
+        padding-left: 0px !important;
+    }
+
+    .member-container {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .page-member .member-container-content {
+        width: 100%;
+    }
 }
