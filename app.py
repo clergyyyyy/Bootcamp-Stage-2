@@ -92,6 +92,9 @@ async def booking(request: Request):
 async def thankyou(request: Request):
     return FileResponse("./static/thankyou.html", media_type="text/html")
 
+@app.get("/member", include_in_schema=False)
+async def member(request: Request):
+    return FileResponse("./static/member.html", media_type="text/html")
 
 def get_member_by_email(email: str):
     query = "SELECT * FROM member WHERE username = %s"
@@ -126,6 +129,48 @@ def add_booking(price: int,
             cur.execute(insert_sql, params) #加新的
             conn.commit()
 
+def add_favorite(attraction_id: int,
+                member_id: int):
+    insert_sql = """
+        INSERT INTO favorite
+            (attraction_id, member_id)
+        VALUES
+            (%s,            %s)
+    """
+    params = (attraction_id, member_id)
+
+    with mysql.connector.connect(**DB_CONFIG) as conn:
+        with conn.cursor() as cur:
+            cur.execute(insert_sql, params) #加新的
+            conn.commit()
+
+def remove_favorite(attraction_id: int,
+                member_id: int):
+    delete_sql = """
+        DELETE FROM favorite WHERE attraction_id = %s AND member_id = %s
+    """
+    params = (attraction_id, member_id)
+
+    with mysql.connector.connect(**DB_CONFIG) as conn:
+        with conn.cursor() as cur:
+            cur.execute(delete_sql, params)
+            conn.commit()
+
+def get_favorite_list(member_id):
+    query = """
+    SELECT a.id, a.name, a.category, a.description, a.address, a.mrt, GROUP_CONCAT(i.image_url) AS images
+    FROM favorite f
+    JOIN attractions a ON f.attraction_id = a.id
+    LEFT JOIN images i ON a.id = i.attraction_id
+    WHERE f.member_id = %s
+    GROUP BY a.id
+    """
+    with mysql.connector.connect(**DB_CONFIG) as conn:
+        with conn.cursor(dictionary=True) as cursor:
+            cursor.execute(query, (member_id,))
+            rows = cursor.fetchall()
+            return rows
+
 def get_booking_list(member_id):
     query = """
     SELECT attraction_id, date, time, price
@@ -137,6 +182,18 @@ def get_booking_list(member_id):
         with conn.cursor(dictionary=True) as cursor:
             cursor.execute(query, (member_id,))
             return cursor.fetchone()
+        
+def get_booking_list_all(member_id):
+    query = """
+    SELECT number, attraction_id, date, time, price, name, email, phone, status
+    FROM orders
+    WHERE member_id = %s AND status = 1
+    """
+
+    with mysql.connector.connect(**DB_CONFIG) as conn:
+        with conn.cursor(dictionary=True) as cursor:
+            cursor.execute(query, (member_id,))
+            return cursor.fetchall()
 
 def delete_booking(member_id):
     query = """
@@ -622,3 +679,103 @@ def order_get(orderNumber: str, credentials: HTTPAuthorizationCredentials = Depe
         }
     }
     return JSONResponse(result, status_code=200)
+
+@app.get("/api/member")
+def booking_get_all(credentials: HTTPAuthorizationCredentials = Depends(auth_scheme)):
+    payload = decode_access_token(credentials.credentials)
+    if not payload:
+        return JSONResponse(status_code=403, content={
+            "error": True,
+            "message": "未登入系統，拒絕存取"
+        })
+
+    member_id = payload["user_id"]
+    orders = get_booking_list_all(member_id)
+    print(f"📦 查詢到訂單數量：{len(orders) if orders else 0}")
+    if not orders:
+        return JSONResponse(content={"data": None}, status_code=200)
+
+    result = []
+
+    for order in orders:
+        print("👉 order 資料：", order)
+        attraction = get_single_attraction(order["attraction_id"])
+        if not attraction:
+            continue
+
+        result.append({
+            "number": order["number"],  # ✅ 修正這裡
+            "price": order["price"],
+            "trip": {
+                "attraction": {
+                    "id": attraction["id"],
+                    "name": attraction["name"],
+                    "address": attraction["address"],
+                    "image": attraction["images"][0] if attraction["images"] else None
+                },
+                "date": order["date"].isoformat(),
+                "time": order["time"]
+            },
+            "contact": {
+                "name": order["name"],
+                "email": order["email"],
+                "phone": order["phone"]
+            },
+            "status": order["status"]
+        })
+
+    return JSONResponse(content={"data": result}, status_code=200)
+
+
+@app.get("/api/favorite")
+async def get_favorite(credentials: HTTPAuthorizationCredentials = Depends(auth_scheme)):
+    payload = decode_access_token(credentials.credentials)
+    if not payload:
+        return JSONResponse(status_code=403, content={
+            "error": True,
+            "message": "未登入系統，無法查看喜愛景點"
+        })
+
+    member_id = payload["user_id"]
+    favorite_data = get_favorite_list(member_id)
+    return JSONResponse(status_code=200, content={
+        "data": favorite_data or []                        # ✔ 至少回空陣列
+    })
+
+@app.post("/api/favorite")
+async def post_add_favorite(attractionId: int, credentials: HTTPAuthorizationCredentials = Depends(auth_scheme)):
+    payload = decode_access_token(credentials.credentials)
+    if not payload:
+        return JSONResponse(status_code=403, content={
+            "error": True,
+            "message": "未登入系統，無法查看喜愛景點"
+        })
+
+    member_id = payload["user_id"]
+    try:
+        add_favorite(attractionId, member_id)
+        return {"ok": True}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={
+            "error": True,
+            "message": "伺服器內部錯誤"
+        })
+    
+@app.delete("/api/favorite")
+async def delete_favorite(attractionId: int, credentials: HTTPAuthorizationCredentials = Depends(auth_scheme)):
+    payload = decode_access_token(credentials.credentials)
+    if not payload:
+        return JSONResponse(status_code=403, content={
+            "error": True,
+            "message": "未登入系統，無法查看喜愛景點"
+        })
+
+    member_id = payload["user_id"]
+    try:
+        remove_favorite(attractionId, member_id)
+        return {"ok": True}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={
+            "error": True,
+            "message": "伺服器內部錯誤"
+        })

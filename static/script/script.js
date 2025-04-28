@@ -11,36 +11,31 @@ document.addEventListener("DOMContentLoaded", () => {
     setupLoginDialogue();
     checkAuthStatus();
 
+    const token = localStorage.getItem("token");
     const isAttractionPage = window.location.pathname.startsWith("/attraction");
     const isBookingPage = window.location.pathname.startsWith("/booking");
-    const isThankyouPage = window.location.pathname.startsWith("/thankyou")
+    const isThankyouPage = window.location.pathname.startsWith("/thankyou");
+    const isMemberPage = window.location.pathname.startsWith("/member");
 
     if (isAttractionPage) {
         fetchAttractionID();
-    } else if (isBookingPage) {
-        const token = localStorage.getItem("token");
+    } else if (isBookingPage || isThankyouPage || isMemberPage) {
         if (!token) {
-            
             document.querySelector("footer")?.classList.add("no-booking");
             setTimeout(() => {
                 document.querySelector(".login")?.click();
             }, 0);
-        } else {
-            handleBookingPage();  
+            return;
         }
-    } else if (isThankyouPage) {
-        const token = localStorage.getItem("token");
-        if (!token) {
-            
-            document.querySelector("footer")?.classList.add("no-booking");
-            setTimeout(() => {
-                document.querySelector(".login")?.click();
-            }, 0);
-        } else {
-            handleThankyouPage();  
+
+        if (isBookingPage) {
+            handleBookingPage();
+        } else if (isThankyouPage) {
+            handleThankyouPage();
+        } else if (isMemberPage) {
+            handleMemberPage();
         }
-    }
-    else {
+    } else {
         fetchAttractions();
     }
 });
@@ -107,7 +102,10 @@ async function fetchAttractions() {
             return;
         }
 
-        loadCard(data.data);
+        const favoriteIds = await getFavoriteIds();
+
+        loadCard(data.data, favoriteIds);
+
         nextPage = data.nextPage ?? (nextPage + 1);
     } catch (error) {
         console.error("⚠️ Fetch Attractions Error:", error);
@@ -117,7 +115,21 @@ async function fetchAttractions() {
     }
 }
 
-function loadCard(attractions) {
+async function getFavoriteIds() {
+    const token = localStorage.getItem("token");
+    if (!token) return [];
+  
+    try {
+      const res    = await fetch("/api/favorite", { headers: { Authorization: `Bearer ${token}` } });
+      const result = await res.json();
+      return extractFavoriteIds(result.data);
+    } catch (err) {
+      console.warn("❌ 無法取得 favorite 列表", err);
+      return [];
+    }
+  }
+
+function loadCard(attractions, favoriteIds = []) {
     const bigBox = document.querySelector(".big-box");
     if (!bigBox) return;
 
@@ -130,6 +142,16 @@ function loadCard(attractions) {
 
         const card = document.createElement("div");
         card.classList.add("card");
+
+        let heartBtn = null;
+        if (localStorage.getItem("token")) {
+            heartBtn = document.createElement("div");
+            heartBtn.classList.add("heart-btn");
+            heartBtn.dataset.id = item.id;               
+        if (favoriteIds.includes(item.id)) heartBtn.classList.add("active");
+            card.appendChild(heartBtn);                  
+        }
+
 
         const img = document.createElement("img");
         img.src = item.images?.[0] || "./static/img/placeholder.jpg";
@@ -158,6 +180,8 @@ function loadCard(attractions) {
 
         bigBox.insertBefore(cardLink, sentinel);
     });
+
+    setupFavorite();
 }
 
 function setupSearchEvents() {
@@ -179,7 +203,6 @@ function setupSearchEvents() {
 
     function handleSearch() {
         const keyword = searchInput.value.trim();
-        showLoading();
         clearBigBox();
 
         if (!keyword) {
@@ -197,42 +220,6 @@ function setupSearchEvents() {
         document.querySelectorAll(".big-box .card-frame").forEach(el => {
             if (!el.classList.contains("sentinel")) el.remove();
         });
-    }
-}
-
-function showLoading() {
-    hideLoading();
-    const bigBox = document.querySelector(".big-box");
-    for (let i = 0; i < 8; i++) {
-        const cardFrame = document.createElement("div");
-        cardFrame.classList.add("card-frame", "loading-card");
-
-        const card = document.createElement("div");
-        card.classList.add("card");
-
-        const img = document.createElement("div");
-        img.classList.add("loading-img");
-
-        const title = document.createElement("div");
-        title.classList.add("loading-title");
-
-        const cardCategory = document.createElement("div");
-        cardCategory.classList.add("card_category");
-
-        const mrt = document.createElement("div");
-        mrt.classList.add("loading-text");
-
-        const category = document.createElement("div");
-        category.classList.add("loading-text");
-
-        card.appendChild(img);
-        card.appendChild(title);
-        cardCategory.appendChild(mrt);
-        cardCategory.appendChild(category);
-        cardFrame.appendChild(card);
-        cardFrame.appendChild(cardCategory);
-
-        bigBox.appendChild(cardFrame);
     }
 }
 
@@ -287,6 +274,17 @@ function loadAttractions(attraction) {
     allBtnContainer.appendChild(leftBtn);
     allBtnContainer.appendChild(rightBtn);
     carousel.appendChild(allBtnContainer);
+
+    const token = localStorage.getItem("token");
+    if (token) {
+      const heartBtn = document.createElement("div");
+      heartBtn.classList.add("heart-btn");
+      heartBtn.dataset.id = attraction.id;
+      
+      heartBtn.style.cssText = "position:absolute;top:10px;right:10px;z-index:10";
+      allBtnContainer.appendChild(heartBtn);
+    }
+
     
     const slider = document.createElement("div");
     slider.className = "slider";
@@ -338,6 +336,8 @@ function loadAttractions(attraction) {
         </div>
     `;
     attractionContainer.appendChild(bookingDiv);
+
+    setupHeartBtn();
 
     const tourPriceP = bookingDiv.querySelector(".tour-price");
     tourPriceP.textContent = '2000';
@@ -415,87 +415,80 @@ function loadAttractions(attraction) {
     mrt.innerHTML += attraction.transport;
 
     setupCarousel();
+    setupAttractionHeartBtn(Number(attraction.id));   
 }
 
-
-function setupCarousel() {
-    const sliderEl = document.querySelector(".slider");
-    const leftBtn = document.querySelector(".all_btn_container .btn_container:first-child img");
-    const rightBtn = document.querySelector(".all_btn_container .btn_container:last-child img");
-    const imgs = sliderEl.querySelectorAll("img:not([data-ignore])");
-    const imgCounts = imgs.length;
+function setupCarousel () {
+    
+    const slider = document.querySelector(".slider");
+    if (!slider) return;
   
-    if (imgCounts === 0) return;
+    const arrows = [...document.querySelectorAll(".all_btn_container .btn_container img")];
+    if (arrows.length < 2) {
+      console.warn("找不到左右箭頭 img，實際找到：", arrows.length);
+      return;
+    }
+    const [leftBtn, rightBtn] = arrows;
   
-    const slideProps = { index: 0 };
-    const slideProxy = new Proxy(slideProps, {
-      set(obj, prop, value) {
-        if (prop === "index") {
-          if (value < 0 || value >= imgCounts) return;
-          obj[prop] = value;
-          scrollToImage(value);
-          updateDots(value);
+    const imgs = slider.querySelectorAll("img:not([data-ignore])");
+    const total = imgs.length;
+    if (total === 0) return;
+  
+    
+    const state = { idx: 0 };
+    const proxy = new Proxy(state, {
+      set (o, p, v){
+        if (p === "idx" && v >= 0 && v < total){
+          o[p] = v;
+          slider.scrollTo({         
+            left: v * slider.clientWidth,
+            behavior: "smooth"
+          });
+          updateDots(v);
         }
+        return true;
       }
     });
   
-    const dotContainer = document.createElement("div");
-    dotContainer.className = "carousel-dots-wrapper";
     
-    const dotContainer2 = document.createElement("div");
-    dotContainer2.className = "carousel-dots";
-    
-    dotContainer.appendChild(dotContainer2); 
-    
+    const dotWrap  = document.createElement("div");
+    dotWrap.className = "carousel-dots-wrapper";
+    const dotsBox  = document.createElement("div");
+    dotsBox.className = "carousel-dots";
+    dotWrap.appendChild(dotsBox);
+    slider.parentElement.appendChild(dotWrap);
+  
     const dots = [];
-    for (let i = 0; i < imgCounts; i++) {
-      const dot = document.createElement("img");
-      dot.src = i === 0
+    for (let i = 0; i < total; i++){
+      const d = document.createElement("img");
+      d.src = i === 0
         ? "/static/img/icon/Union.png"
         : "/static/img/icon/circle default 1.png";
-      dot.addEventListener("click", () => {
-        slideProxy.index = i;
-      });
-      dotContainer2.appendChild(dot); 
-      dots.push(dot);
+      d.onclick = () => { proxy.idx = i; };
+      dotsBox.appendChild(d);
+      dots.push(d);
     }
   
-    sliderEl.parentElement.appendChild(dotContainer); 
-  
-    leftBtn.addEventListener("click", () => {
-      slideProxy.index -= 1;
-    });
-    rightBtn.addEventListener("click", () => {
-      slideProxy.index += 1;
-    });
-  
-    function scrollToImage(index) {
-      const target = imgs[index];
-      if (target) {
-        target.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
-      }
-    }
-  
-    function updateDots(current) {
-      dots.forEach((dot, i) => {
-        dot.src = i === current
+    function updateDots(cur){
+      dots.forEach((d,i)=>{
+        d.src = i === cur
           ? "/static/img/icon/Union.png"
           : "/static/img/icon/circle default 1.png";
       });
     }
-
-    function debounce(fn, delay = 200) {
-        let timer;
-        return (...args) => {
-          clearTimeout(timer);
-          timer = setTimeout(() => fn(...args), delay);
-        };
-      }
-      
-      window.addEventListener("resize", debounce(() => {
-        scrollToImage(slideProps.index);
-      }, 200));
-      
+  
+    
+    leftBtn .onclick = () => { proxy.idx--; };
+    rightBtn.onclick = () => { proxy.idx++; };
+  
+    
+    let resizeT;
+    window.addEventListener("resize", () => {
+      clearTimeout(resizeT);
+      resizeT = setTimeout(()=>{
+        slider.scrollLeft = proxy.idx * slider.clientWidth;
+      },150);
+    });
   }
 
   function setupLoginDialogue() {
@@ -824,7 +817,6 @@ function initTapPay () {
     maskCreditCardNumberRange: { beginIndex: 6, endIndex: 11 }
   });
   
-
   TPDirect.card.onUpdate(update => {
     update.canGetPrime ? payBtn.removeAttribute('disabled')
                        : payBtn.setAttribute('disabled', true);
@@ -877,9 +869,8 @@ function onPayClick (e) {
   });
 }
 
-
     } catch (error) {
-        console.error("⚠️ Fetch Booking Error:", error);
+        console.error("Fetch Booking Error:", error);
         document.querySelector("footer")?.classList.add("no-booking");
     }
 }
@@ -984,7 +975,6 @@ async function handleBookingPage() {
     }
 }
 
-
 async function handleThankyouPage() {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -1020,4 +1010,302 @@ async function handleThankyouPage() {
     }
 }
 
+async function handleMemberPage() {
+    const token = localStorage.getItem("token");
+    if (!token) {
+        showLoginDialog();
+        document.querySelector("footer")?.classList.add("no-booking");
+        return;
+    }
 
+    try {
+        const res = await fetch("/api/user/auth", {
+            method: "GET",
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        if (!res.ok || !data.data || !data.data.name) {
+            showLoginDialog();
+            document.querySelector("footer")?.classList.add("no-booking");
+            return;
+        }
+
+        fetchMember(data.data.name);
+
+    } catch (err) {
+        console.error("驗證失敗", err);
+        showLoginDialog();
+        document.querySelector("footer")?.classList.add("no-booking");
+    }
+}
+
+async function fetchMember(userName) {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+  
+    const memberContainer = document.querySelector(".member-container");
+    if (!memberContainer) return;
+  
+    
+    memberContainer.innerHTML = "";
+  
+    
+    const functionDiv = document.createElement("div");
+    functionDiv.className = "function-container";
+    functionDiv.innerHTML = `
+      <div class="profile">
+          <img src="/static/img/icon/account-grey-icon.png" alt="profilepic">
+          <h2 class="name">${userName}</h2>
+      </div>
+      <div class="two-functions">
+      <div class="function function-orders"><img src="/static/img/icon/orders.svg" alt="訂單"><h2>我的訂單</h2></div>
+      <div class="function function-favorite"><img src="/static/img/icon/favorite.svg" alt="最愛"><h2>我的最愛</h2></div>
+      </div>
+    `;
+    memberContainer.appendChild(functionDiv);
+  
+    
+    const contentDiv = document.createElement("div");
+    contentDiv.className = "member-container-content";
+    memberContainer.appendChild(contentDiv);
+  
+    
+    setupMemberFunction();
+    fetchOrder();          
+    document.querySelector("footer")?.classList.add("no-booking");
+  }
+  
+  
+  function setupMemberFunction() {
+    const btnOrders   = document.querySelector(".function-orders");
+    const btnFavorite = document.querySelector(".function-favorite");
+    const contentDiv  = document.querySelector(".member-container-content");
+  
+    if (!btnOrders || !btnFavorite || !contentDiv) {
+      console.error("無法initialize會員功能切換元件");
+      return;
+    }
+  
+    btnOrders.addEventListener("click", () => {
+      contentDiv.innerHTML = "";           
+      btnOrders.classList.add("active");   
+      btnFavorite.classList.remove("active");
+      fetchOrder();
+    });
+  
+    btnFavorite.addEventListener("click", () => {
+      contentDiv.innerHTML = "";
+      btnFavorite.classList.add("active");
+      btnOrders.classList.remove("active");
+      fetchFavorite();
+    });
+  }
+  
+  async function fetchOrder() {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+  
+    const container = document.querySelector(".member-container-content");
+    if (!container) return;
+  
+    container.innerHTML = "<p>Loading...</p>";
+  
+    try {
+      const res    = await fetch("/api/member", { headers: { Authorization: `Bearer ${token}` } });
+      const result = await res.json();
+  
+      container.innerHTML = "";   
+  
+      const orders = result.data;
+      if (!res.ok || !orders || orders.length === 0) {
+        container.innerHTML = `<h3>目前沒有任何已預定的行程</h3>`;
+        return;
+      }
+  
+      for (const order of orders) {
+        const { price, trip } = order;
+        const { attraction, date, time } = trip;
+  
+        const div = document.createElement("div");
+        div.className = "booking_container_attraction";
+        div.innerHTML = `
+          <img src="${attraction.image}" alt="${attraction.name}">
+          <div class="info">
+              <h2>${attraction.name}</h2>
+              <div class="date"><strong>日期：</strong><span class="normal">${date}</span></div>
+              <div class="time"><strong>時間：</strong><span class="normal">${time === "morning" ? "上半天" : "下半天"}</span></div>
+              <div class="price"><strong>費用：</strong><span class="normal">新台幣 ${price} 元</span></div>
+              <div class="address"><strong>地點：</strong><span class="normal">${attraction.address}</span></div>
+          </div>`;
+        container.appendChild(div);
+      }
+    } catch (err) {
+      console.error("fetchOrder 發生錯誤：", err);
+      container.innerHTML = `<h3>載入訂單時發生錯誤，請稍後再試</h3>`;
+    }
+  }
+  
+  
+  async function fetchFavorite() {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+  
+    const container = document.querySelector(".member-container-content");
+    if (!container) return;
+  
+    container.innerHTML = "<p>Loading...</p>";
+  
+    try {
+      const res    = await fetch("/api/favorite", { headers: { Authorization: `Bearer ${token}` } });
+      const result = await res.json();
+  
+      container.innerHTML = "";
+  
+      const favorites = result.data;
+      if (!res.ok || !favorites || favorites.length === 0) {
+        container.innerHTML = `<h3>目前沒有任何最愛的景點</h3>`;
+        return;
+      }
+  
+      for (const item of favorites) {
+        const { id, name, category, address, mrt, description, images } = item;
+        const imageUrl = images?.split(",")[0] || "/static/img/placeholder.jpg";
+  
+        const card = document.createElement("div");
+        card.className = "booking_container_attraction";
+        card.innerHTML = `
+          <img src="${imageUrl}" alt="${name}">
+          <div class="info">
+              <h2>${name}</h2>
+              <div class="mrt">${category} at ${mrt || "無捷運站"}</div>
+              <div class="address"><strong>地點：</strong><span class="normal">${address}</span></div>
+              <div class="description"><span class="normal">${description}</span></div>
+              <a href="/attraction/${id}" class="attraction_id">查看景點</a>
+          </div>`;
+        container.appendChild(card);
+      }
+    } catch (err) {
+      console.error("fetchFavorite 發生錯誤：", err);
+      container.innerHTML = `<h3>載入我的最愛時發生錯誤，請稍後再試</h3>`;
+    }
+  }
+
+  function setupHeartBtn() {
+    const heartBtn = document.querySelector(".heart-btn");
+    if (!heartBtn) return;
+
+    heartBtn.addEventListener("click", async (e) => {
+        e.preventDefault();
+        const token = localStorage.getItem("token");
+        const attractionId = parseInt(heartBtn.dataset.id);
+
+        if (!token) {
+            showLoginDialog(); 
+            return;
+        }
+
+        try {
+            if (heartBtn.classList.contains("active")) {
+                await fetch(`/api/favorite?attractionId=${attractionId}`, {
+                    method: "DELETE",
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                heartBtn.classList.remove("active");
+            } else {
+                await fetch(`/api/favorite?attractionId=${attractionId}`, {
+                    method: "POST",
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                heartBtn.classList.add("active");
+            }
+        } catch (err) {
+            console.error("收藏失敗：", err);
+        }
+    });
+}
+
+async function setupAttractionHeartBtn(attractionId) {
+    attractionId = Number(attractionId);    
+    const btn = document.querySelector(".all_btn_container .heart-btn");
+    if (!btn) return;
+  
+    const token = localStorage.getItem("token");
+    if (!token) return;
+  
+    try {
+      const res    = await fetch("/api/favorite", { headers: { Authorization: `Bearer ${token}` } });
+      const result = await res.json();
+      const ids    = extractFavoriteIds(result.data);
+  
+      
+      if (ids.includes(attractionId)) btn.classList.add("active");
+  
+      
+      btn.addEventListener("click", async e => {
+        e.preventDefault();
+        try {
+          const url  = `/api/favorite?attractionId=${attractionId}`;
+          const opts = { headers: { Authorization: `Bearer ${token}` } };
+          if (btn.classList.contains("active")) {
+            await fetch(url, { ...opts, method: "DELETE" });
+            btn.classList.remove("active");
+          } else {
+            await fetch(url, { ...opts, method: "POST"   });
+            btn.classList.add("active");
+          }
+        } catch (err) {
+          console.error("景點頁收藏失敗", err);
+        }
+      });
+  
+    } catch (err) {
+      console.error("favorite讀取失敗", err);
+    }
+  }
+
+  function extractFavoriteIds(raw) {
+    if (!Array.isArray(raw)) return [];
+    return raw
+      .map(item => {
+        if (typeof item === "number" || typeof item === "string") {
+          return Number(item);
+        }
+        if (item && typeof item === "object") {
+          
+          return Number(
+            item.id ??
+            item.attraction_id ??
+            item.attractionId
+          );
+        }
+        return NaN;
+      })
+      .filter(n => Number.isFinite(n));
+  }
+
+  function setupFavorite() {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+  
+    document.querySelectorAll(".card .heart-btn").forEach(btn => {
+      btn.onclick = async e => {
+        e.preventDefault();
+        const id   = Number(btn.dataset.id);
+        const url  = `/api/favorite?attractionId=${id}`;
+        const opts = { headers: { Authorization: `Bearer ${token}` } };
+  
+        try {
+          if (btn.classList.contains("active")) {
+            await fetch(url, { ...opts, method: "DELETE" });
+            btn.classList.remove("active");
+          } else {
+            await fetch(url, { ...opts, method: "POST"  });
+            btn.classList.add("active");
+          }
+        } catch (err) {
+          console.error("列表頁收藏失敗", err);
+        }
+      };
+    });
+  }
